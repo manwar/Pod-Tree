@@ -1,0 +1,19 @@
+--- #YAML:1.0
+name:                Pod-Tree
+version:             1.17
+abstract:            Create a static syntax tree for a POD
+license:             ~
+generated_by:        ExtUtils::MakeMaker version 6.32
+distribution_type:   module
+requires:     
+    File::Find:                    1
+    HTML::Stream:                  1.49
+    IO::File:                      1
+    IO::String:                    1
+    Pod::Escapes:                  1.02
+    Text::Template:                1
+meta-spec:
+    url:     http://module-build.sourceforge.net/META-spec-v1.2.html
+    version: 1.2
+author:
+    - Steven McDougall (swmcd@world.std.com)
