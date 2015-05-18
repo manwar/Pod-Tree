@@ -10,6 +10,10 @@ WriteMakefile(NAME	      => 'Pod::Tree',
 	       (ABSTRACT_FROM => 'lib/Pod/Tree.pm',
 		AUTHOR        => 'Steven McDougall (swmcd@world.std.com)') : 
 	       ()),
+	    ( $ExtUtils::MakeMaker::VERSION >= 6.3002
+		? ( 'LICENSE' => 'perl' )
+		: () ),
+
 	      clean           => { FILES => "t/pod2html.d/*.html* t/pods2html.d/A t/pods2html.d/html_act* t/pods2html.d/podR/HTML t/*/*.act lib/Pod/Tree/*~" },
 	      dist            => { COMPRESS => 'gzip --best',
 			 	   SUFFIX   => '.gz' },
@@ -20,4 +24,19 @@ WriteMakefile(NAME	      => 'Pod::Tree',
 				   IO::String	  => 1,
 	                           Pod::Escapes   => 1.02,
 				   Text::Template => 1      },
+	(eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (
+	META_MERGE => {
+		'meta-spec' => { version => 2 },
+		resources => {
+			repository => {
+				type       => 'git',
+				url        => 'http://github.com/szabgab/Pod-Tree.git',
+				web        => 'http://github.com/szabgab/Pod-Tree',
+			},
+			bugtracker => {
+				web        => 'http://github.com/szabgab/Pod-Tree/issues',
+			},
+			homepage   => 'http://metacpan.org/pod/Pod::Tree',
+		},
+	} ) : ())
 );
