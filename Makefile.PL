@@ -23,7 +23,9 @@ WriteMakefile(NAME	      => 'Pod::Tree',
 				   IO::File	  => 1,
 				   IO::String	  => 1,
 	                           Pod::Escapes   => 1.02,
-				   Text::Template => 1      },
+				   Text::Template => 1,
+					'Test::More' => 1,
+},
 	(eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (
 	META_MERGE => {
 		'meta-spec' => { version => 2 },

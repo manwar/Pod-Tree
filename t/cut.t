@@ -4,13 +4,9 @@ use strict;
 use Pod::Tree;
 use IO::File;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, "\n" }
-
 my $Dir = "t/cut.d";
 
-print "1..6\n";
+use Test::More tests => 6;
 
 LoadFile      ("fileU"     );
 LoadFile      ("file0"  , 0);
@@ -32,7 +28,7 @@ sub LoadFile
 
     my $actual   = $tree->dump;
     my $expected = ReadFile("$Dir/$dump.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 
     WriteFile("$Dir/$dump.act", $actual);
 }
@@ -51,7 +47,7 @@ sub LoadString
 
     my $actual   = $tree->dump;
     my $expected = ReadFile("$Dir/$dump.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 
     WriteFile("$Dir/$dump.act", $actual);
 }
@@ -69,7 +65,7 @@ sub LoadParagraphs
     my $actual     = $tree->dump;
     my $expected   = ReadFile("$file.p_exp");
 
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 }
 
 
