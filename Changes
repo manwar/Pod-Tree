@@ -1,5 +1,8 @@
 Revision history for Perl extension Pod::Tree
 
+1.19  2015.05.18
+    - Include link to VCS, Bug tracking system, hopepage.
+
 1.18  2015.05.18
     - Just to let PAUSE index it.
 
