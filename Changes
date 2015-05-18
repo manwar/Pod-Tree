@@ -1,5 +1,8 @@
 Revision history for Perl extension Pod::Tree
 
+1.17_01 2015.05.18
+    - New maintainer (SZABGAB)
+
 1.17	2010 Jun 21
 	pods2html
 	- quote paths in REs
