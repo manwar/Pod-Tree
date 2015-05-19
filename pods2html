@@ -1,6 +1,7 @@
 #!/usr/local/bin/perl
 
 use strict;
+use warnings;
 use File::Find;
 use File::Path;
 use Getopt::Long;
