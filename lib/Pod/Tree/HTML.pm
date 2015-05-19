@@ -1,3 +1,7 @@
+package Pod::Tree::HTML;
+use strict;
+use warnings;
+
 # Copyright (c) 1999-2007 by Steven McDougall.  This module is free
 # software; you can redistribute it and/or modify it under the same
 # terms as Perl itself.
@@ -8,44 +12,8 @@ use IO::String;
 use Pod::Tree;
 use Text::Template;
 
-package Pod::Tree::BitBucket;
-use strict;
-use warnings;
-
-sub new { bless {}, shift }
-sub AUTOLOAD {shift}
-
-package Pod::Tree::StrStream;
-use strict;
-use warnings;
-
-sub new {
-	my ( $class, $ref ) = @_;
-
-	if ($ref) {
-		return bless $ref, $class;
-	}
-	else {
-		my $st = '';
-		return bless \$st, $class;
-	}
-}
-
-sub print {
-	my $st = shift;
-	$$st .= join( '', @_ );
-}
-
-sub get {
-	my $st = shift;
-	my $s  = $$st;
-	$$st = '';
-	$s;
-}
-
-package Pod::Tree::HTML;
-use strict;
-use warnings;
+use Pod::Tree::BitBucket;
+use Pod::Tree::StrStream;
 
 use constant BGCOLOR => '#ffffff';
 use constant TEXT    => '#000000';
