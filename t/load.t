@@ -4,13 +4,9 @@ use strict;
 use Pod::Tree;
 use IO::File;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, "\n" }
-
 my $Dir = "t/load.d";
 
-print "1..3\n";
+use Test::More tests => 3;
 
 LoadFH        ("$Dir/list");
 LoadString    ("$Dir/list");
@@ -27,7 +23,7 @@ sub LoadFH
 
     my $actual   = $tree->dump;
     my $expected = ReadFile("$file.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 
     WriteFile("$file.act", $actual);
 }
@@ -42,7 +38,7 @@ sub LoadString
 
     my $actual = $tree->dump;
     my $expected = ReadFile("$file.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 }
 
 
@@ -57,7 +53,7 @@ sub LoadParagraphs
     my $actual     = $tree->dump;
     my $expected   = ReadFile("$file.exp");
 
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 }
 
 

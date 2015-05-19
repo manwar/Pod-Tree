@@ -5,11 +5,7 @@ use diagnostics;
 use Pod::Tree;
 use Pod::Tree::Pod;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, "\n" }
-
-print "1..6\n";
+use Test::More tests => 6;
 
 my $dir = "t/pod.d";
 
@@ -22,7 +18,7 @@ for my $file (qw(cut paragraph list sequence for link))
        $pod->translate;
 
     my $expected = ReadFile("$dir/$file.pod");
-    $$actual eq $expected or Not; OK;
+    is $$actual, $expected;
 
     WriteFile("$dir/$file.act", $$actual);
 }

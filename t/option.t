@@ -6,11 +6,7 @@ use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, "\n" }
-
-print "1..8\n";
+use Test::More tests => 8;
 
 Option("toc" ,  0 , 0);
 Option("toc" ,  1 , 1);
@@ -37,7 +33,7 @@ sub Option
     $html->translate;
 
     my $expected = ReadFile("$dir/$option$suffix.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 
     WriteFile("$dir/$option$suffix.act"	              	      , $actual);
 #   WriteFile("$ENV{HOME}/public_html/pod/$option$suffix.html", $actual);

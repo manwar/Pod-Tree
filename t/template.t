@@ -6,14 +6,9 @@ use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, "\n" }
-
 my $Dir = 't/template.d';
 
-my $nTests = 6 + 6;
-print "1..$nTests\n";
+use Test::More tests => 12;
 
 Template1();
 Template2();
@@ -32,7 +27,7 @@ sub Template1
 
 	my $expected = ReadFile("$Dir/$file.exp");
 	my $actual   = ReadFile($act);
-	$actual eq $expected or Not; OK;
+	is $actual, $expected;
     }
 }
 
@@ -52,7 +47,7 @@ sub Template2
 
 	my $expected = ReadFile("$Dir/$file.exp");
 	my $actual   = ReadFile("$act");
-	$actual eq $expected or Not; OK;
+	is $actual, $expected;
     }
 }
 
