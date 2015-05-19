@@ -3,6 +3,7 @@ MYMETA.yml
 Makefile
 blib/
 pm_to_blib
+*.swp
 *.act
 t/pod2html.d/cut.html
 t/pod2html.d/cut.html_t
