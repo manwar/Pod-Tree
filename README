@@ -16,7 +16,7 @@ Modules
 
 Executables
 
-    pod2html translates a POD file to an HTML file.
+    podtree2html translates a POD file to an HTML file.
 
     pods2html walks a directory tree, 
     translates all the PODs that it finds into HTML files,
