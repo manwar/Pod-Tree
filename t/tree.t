@@ -1,10 +1,9 @@
-# -*- perl -*-
-
 use strict;
+use warnings;
+use Test::More tests => 9;
+
 use Pod::Tree;
 use Path::Tiny qw(path);
-
-use Test::More tests => 9;
 
 my $Dir = "t/tree.d";
 Parse();

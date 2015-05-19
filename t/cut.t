@@ -1,13 +1,12 @@
-# -*- perl -*-
-
 use strict;
-use Pod::Tree;
+use warnings;
 use IO::File;
 use Path::Tiny qw(path);
+use Test::More tests => 6;
+
+use Pod::Tree;
 
 my $Dir = "t/cut.d";
-
-use Test::More tests => 6;
 
 LoadFile("fileU");
 LoadFile( "file0", 0 );

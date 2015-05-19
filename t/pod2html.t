@@ -1,13 +1,11 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
 use Config;
+use Test::More;
 
 my @Files  = qw(cut for link list paragraph sequence);
 my $NFiles = @Files;
 
-use Test::More;
 plan tests => 3 * $NFiles;
 
 my $Dir = "t/pod2html.d";

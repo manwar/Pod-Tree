@@ -1,12 +1,10 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
+use Path::Tiny qw(path);
+use Test::More tests => 6;
+
 use Pod::Tree;
 use Pod::Tree::Pod;
-use Path::Tiny qw(path);
-
-use Test::More tests => 6;
 
 my $dir = "t/pod.d";
 

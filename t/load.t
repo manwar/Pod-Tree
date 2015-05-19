@@ -1,13 +1,12 @@
-# -*- perl -*-
-
 use strict;
-use Pod::Tree;
+use warnings;
 use IO::File;
 use Path::Tiny qw(path);
+use Test::More tests => 3;
+
+use Pod::Tree;
 
 my $Dir = "t/load.d";
-
-use Test::More tests => 3;
 
 LoadFH("$Dir/list");
 LoadString("$Dir/list");

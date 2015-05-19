@@ -1,15 +1,13 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
 use HTML::Stream;
+use Path::Tiny qw(path);
+use Test::More tests => 6 * 3;
+
 use Pod::Tree;
 use Pod::Tree::HTML;
-use Path::Tiny qw(path);
 
 my $Dir = 't/mapper.d';
-
-use Test::More tests => 6 * 3;
 
 Translate();
 

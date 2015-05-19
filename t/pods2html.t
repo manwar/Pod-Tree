@@ -1,10 +1,7 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
 use Config;
 use File::Path;
-
 use Test::More tests => 8;
 
 my $dir = "t/pods2html.d";

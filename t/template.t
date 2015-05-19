@@ -1,15 +1,13 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
 use HTML::Stream;
+use Path::Tiny qw(path);
+use Test::More tests => 12;
+
 use Pod::Tree;
 use Pod::Tree::HTML;
-use Path::Tiny qw(path);
 
 my $Dir = 't/template.d';
-
-use Test::More tests => 12;
 
 Template1();
 Template2();

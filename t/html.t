@@ -1,16 +1,15 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
 use HTML::Stream;
+use Path::Tiny qw(path);
+use Test::More;
+
 use Pod::Tree;
 use Pod::Tree::HTML;
-use Path::Tiny qw(path);
 
 my $Dir = 't/html.d';
 
 my $nTests = 5 + 5 + 6 + 2 + 2 + 1 + 1;
-use Test::More;
 plan tests => $nTests;
 
 Source1();

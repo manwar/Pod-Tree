@@ -1,13 +1,11 @@
-# -*- perl -*-
-
 use strict;
-use diagnostics;
+use warnings;
 use HTML::Stream;
+use Path::Tiny qw(path);
+use Test::More tests => 8;
+
 use Pod::Tree;
 use Pod::Tree::HTML;
-use Path::Tiny qw(path);
-
-use Test::More tests => 8;
 
 Option( "toc", 0, 0 );
 Option( "toc", 1, 1 );
