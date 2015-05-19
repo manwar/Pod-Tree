@@ -5,6 +5,7 @@
 package Pod::Tree::Node;
 
 use strict;
+use warnings;
 use Pod::Escapes ();
 
 $Pod::Tree::Node::VERSION = '1.10';

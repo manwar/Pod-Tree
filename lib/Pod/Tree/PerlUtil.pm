@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use 5.005;
 
 package Pod::Tree::PerlUtil;

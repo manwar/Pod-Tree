@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use 5.6.0;
 use HTML::Stream;
 use Pod::Tree;

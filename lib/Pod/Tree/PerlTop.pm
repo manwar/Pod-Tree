@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use 5.005;
 use Pod::Tree::HTML;
 use Pod::Tree::PerlUtil;

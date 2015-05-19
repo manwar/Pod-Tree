@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use 5.005;
 use Pod::Tree;
 use Pod::Tree::HTML;
@@ -144,9 +145,9 @@ sub add_index {
 
 	my $pod = join "\n\n", @lines;
 
-	my $index = new Pod::Tree;
-	$index->load_string($pod);
-	my $children = $index->get_root->get_children;
+	my $tree = new Pod::Tree;
+	$tree->load_string($pod);
+	my $children = $tree->get_root->get_children;
 
 	$perl_func->{tree}->push(@$children);
 }

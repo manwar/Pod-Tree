@@ -5,6 +5,7 @@
 package Pod::Tree::Pod;
 
 use strict;
+use warnings;
 use IO::File;
 use Pod::Tree;
 

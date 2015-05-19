@@ -1,4 +1,5 @@
 use strict;
+use warnings;
 use 5.6.0;
 use File::Find;
 use HTML::Stream;
@@ -144,7 +145,7 @@ sub _emit_entries {
 
 	$stream->PRE;
 
-	my $pods = $perl_pod->{pods};
+	$pods = $perl_pod->{pods};
 	for my $link ( sort keys %$pods ) {
 		my $pad = $col_width - length $link;
 		$stream->A( HREF => "$link.html" )->t($link)->_A;

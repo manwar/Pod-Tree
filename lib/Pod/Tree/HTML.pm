@@ -2,7 +2,6 @@
 # software; you can redistribute it and/or modify it under the same
 # terms as Perl itself.
 
-use strict;
 use HTML::Stream;
 use IO::File;
 use IO::String;
@@ -10,11 +9,15 @@ use Pod::Tree;
 use Text::Template;
 
 package Pod::Tree::BitBucket;
+use strict;
+use warnings;
 
 sub new { bless {}, shift }
 sub AUTOLOAD {shift}
 
 package Pod::Tree::StrStream;
+use strict;
+use warnings;
 
 sub new {
 	my ( $class, $ref ) = @_;
@@ -41,6 +44,8 @@ sub get {
 }
 
 package Pod::Tree::HTML;
+use strict;
+use warnings;
 
 use constant BGCOLOR => '#ffffff';
 use constant TEXT    => '#000000';
@@ -623,6 +628,8 @@ sub escape_2396 {
 }
 
 package Pod::Tree::HTML::LinkMap;
+use strict;
+use warnings;
 
 sub new {
 	my $class = shift;

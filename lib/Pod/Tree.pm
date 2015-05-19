@@ -3,6 +3,8 @@
 # terms as Perl itself.
 
 package Pod::Tree::Stream;
+use strict;
+use warnings;
 
 sub new {
 	my ( $package, $fh ) = @_;
@@ -42,6 +44,7 @@ package Pod::Tree;
 require Exporter;
 
 use strict;
+use warnings;
 use IO::File;
 use Pod::Tree::Node;
 use base qw(Exporter);
