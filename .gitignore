@@ -5,6 +5,7 @@ blib/
 pm_to_blib
 *.swp
 *.act
+cover_db/
 t/pod2html.d/cut.html
 t/pod2html.d/cut.html_t
 t/pod2html.d/cut.html_tv
