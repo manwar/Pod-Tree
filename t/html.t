@@ -6,14 +6,11 @@ use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, ' ', (caller 1)[3], "\n" }
-
 my $Dir = 't/html.d';
 
 my $nTests = 5 + 5 + 6 + 2 + 2 + 1 + 1;
-print "1..$nTests\n";
+use Test::More;
+plan tests => $nTests;
 
 Source1  ();
 Source2  ();
@@ -84,7 +81,7 @@ sub Source
        $html->translate;
 
     my $expected = ReadFile("$Dir/paragraph.exp");
-       $$actual eq $expected or Not; OK;
+       is $$actual, $expected;
 }
 
 sub Dest1
@@ -98,7 +95,7 @@ sub Dest1
        $html->translate;
 
     my $expected = ReadFile("$Dir/paragraph.exp");
-       $actual eq $expected or Not; OK;
+       is $actual, $expected;
 }
 
 sub Dest2
@@ -112,7 +109,7 @@ sub Dest2
 
     my $expected = ReadFile("$Dir/paragraph.exp");
     my $actual   = ReadFile("$Dir/paragraph.act");
-       $actual eq $expected or Not; OK;
+       is $actual, $expected;
 }
 
 sub Dest3
@@ -124,7 +121,7 @@ sub Dest3
        $html->translate;
 
     my $expected = ReadFile("$Dir/paragraph.exp");
-       $actual eq $expected or Not; OK;
+       is $actual, $expected;
 }
 
 sub Dest4
@@ -136,7 +133,7 @@ sub Dest4
        $html->translate;
 
     my $expected = ReadFile("$Dir/paragraph.exp");
-       $actual eq $expected or Not; OK;
+       is $actual, $expected;
 }
 
 sub Dest5
@@ -149,7 +146,7 @@ sub Dest5
 
     my $expected = ReadFile("$Dir/paragraph.exp");
     my $actual   = ReadFile("$Dir/paragraph.act");
-       $actual eq $expected or Not; OK;
+       is $actual, $expected;
 }
 
 
@@ -163,7 +160,7 @@ sub Translate
 	$html->translate;
 
 	my $expected = ReadFile("$Dir/$file.exp");
-	$actual eq $expected or Not; OK;
+	is $actual, $expected;
 
 	WriteFile("$Dir/$file.act"			 , $actual);
     #   WriteFile("$ENV{HOME}/public_html/pod/$file.html", $actual);
@@ -178,11 +175,11 @@ sub Empty
 
     my $html = new Pod::Tree::HTML "$Dir/empty.pod", $actual;
     $html->translate;
-    -e $actual and Not; OK;
+    ok ! -e $actual;
 
     $html = new Pod::Tree::HTML "$Dir/empty.pod", $actual, empty => 1;
     $html->translate;
-    -e $actual or Not; OK;
+    ok -e $actual;
 }
 
 sub Emit
@@ -196,7 +193,7 @@ sub Emit
 	$html->$emit;
 
 	my $expected = ReadFile("$Dir/$piece.exp");
-	$actual eq $expected or Not; OK;
+	is $actual, $expected;
 
 	WriteFile("$Dir/$piece.act"			  , $actual);
     #   WriteFile("$ENV{HOME}/public_html/pod/$piece.html", $actual);
@@ -211,7 +208,7 @@ sub Base
     $html->translate;
 
     my $expected = ReadFile("$Dir/base.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 
     WriteFile("$Dir/base.act"			    , $actual);
 #   WriteFile("$ENV{HOME}/public_html/pod/base.html", $actual);
@@ -225,7 +222,7 @@ sub Depth
     $html->translate;
 
     my $expected = ReadFile("$Dir/depth.exp");
-    $actual eq $expected or Not; OK;
+    is $actual, $expected;
 
     WriteFile("$Dir/depth.act"			     , $actual);
 #   WriteFile("$ENV{HOME}/public_html/pod/depth.html", $actual);

@@ -6,14 +6,9 @@ use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, ' ', (caller 1)[3], "\n" }
-
 my $Dir = 't/mapper.d';
 
-my $nTests = 6 * 3;
-print "1..$nTests\n";
+use Test::More tests => 6 * 3;
 
 Translate();
 
@@ -37,7 +32,7 @@ sub Translate
 	$html->translate;
 
 	my $expected = ReadFile("$Dir/$file.exp");
-	$actual eq $expected or Not; OK;
+	is $actual, $expected;
 
 	WriteFile("$Dir/$file.act"			 , $actual);
     #   WriteFile("$ENV{HOME}/public_html/pod/$file.html", $actual);
