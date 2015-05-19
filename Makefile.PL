@@ -25,6 +25,7 @@ WriteMakefile(NAME	      => 'Pod::Tree',
 	                           Pod::Escapes   => 1.02,
 				   Text::Template => 1,
 					'Test::More' => 1,
+					'Test::Compile' => 1.2.1,
 },
 	(eval { ExtUtils::MakeMaker->VERSION(6.46) } ? (
 	META_MERGE => {
