@@ -10,5 +10,5 @@ perl:
   - "5.12"
   - "5.10"
 before_install:
+  - cpanm --notest Perl::Tidy
   - cpanm --notest Test::Code::TidyAll 
-
