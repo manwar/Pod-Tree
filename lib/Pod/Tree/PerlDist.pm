@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use 5.005;
 use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;

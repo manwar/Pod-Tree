@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use 5.005;
 use File::Find;
 use HTML::Stream;
 use Pod::Tree;

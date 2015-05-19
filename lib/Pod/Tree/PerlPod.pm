@@ -1,6 +1,5 @@
 use strict;
 use warnings;
-use 5.6.0;
 use File::Find;
 use HTML::Stream;
 use IO::File;

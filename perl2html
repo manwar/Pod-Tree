@@ -1,6 +1,5 @@
 #!/usr/local/bin/perl
 
-use 5.005;
 use strict;
 use warnings;
 use Config;

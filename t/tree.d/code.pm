@@ -1,6 +1,5 @@
 #!/usr/local/bin/perl
 
-use 5.6.0;
 use strict;
 
 my @entries;
