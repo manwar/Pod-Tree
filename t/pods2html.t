@@ -5,13 +5,7 @@ use diagnostics;
 use Config;
 use File::Path;
 
-my $Skip = "# Skipped: test skipped on this platform\n";
-my $N    = 1;
-
-sub Not  { print "not " }
-sub OK   { print "ok ", $N++, "\n" }
-
-print "1..8\n";
+use Test::More tests => 8;
 
 my $dir = "t/pods2html.d";
 Simple ($dir);
@@ -30,15 +24,15 @@ sub Simple
 
     rmtree("$d/html_act");
     system "$Config{perlpath} $pods2html $d/pod $d/html_act";
-    RDiff("$d/html_exp", "$d/html_act") and Not; OK;
+    ok ! RDiff("$d/html_exp", "$d/html_act");
 
     rmtree("$d/html_act_t");
     system "$Config{perlpath} $pods2html --variables $values $d/pod $d/html_act_t $template";
-    RDiff("$d/html_exp_t", "$d/html_act_t") and Not; OK;
+    ok ! RDiff("$d/html_exp_t", "$d/html_act_t");
 
     rmtree("$d/html_act_tv");
     system "$Config{perlpath} $pods2html --variables $values $d/pod $d/html_act_tv $template color=red";
-    RDiff("$d/html_exp_tv", "$d/html_act_tv") and Not; OK;
+    ok ! RDiff("$d/html_exp_tv", "$d/html_act_tv");
 }
 
 sub Empty
@@ -47,11 +41,11 @@ sub Empty
 
     rmtree("$d/html_act");
     system "$Config{perlpath} blib/script/pods2html $d/pod $d/html_act";
-    RDiff("$d/html_exp", "$d/html_act") and Not; OK;
+    ok ! RDiff("$d/html_exp", "$d/html_act");
 
     rmtree("$d/html_act");
     system "$Config{perlpath} blib/script/pods2html --empty $d/pod $d/html_act";
-    RDiff("$d/empty_exp", "$d/html_act") and Not; OK;
+    ok ! RDiff("$d/empty_exp", "$d/html_act");
 }
 
 sub Subdir
@@ -60,7 +54,7 @@ sub Subdir
 
     rmtree("$d/A");
     system "$Config{perlpath} blib/script/pods2html $d/pod $d/A/B/C";
-    RDiff("$d/html_exp", "$d/A/B/C") and Not; OK;
+    ok ! RDiff("$d/html_exp", "$d/A/B/C");
 }
 
 sub Recurse
@@ -71,9 +65,9 @@ sub Recurse
 
     rmtree("$d/podR/HTML");
     system "$Config{perlpath} blib/script/pods2html $d/podR $d/podR/HTML";
-    RDiff("$d/podR_exp", "$d/podR") and Not; OK;
+    ok ! RDiff("$d/podR_exp", "$d/podR");
     system "$Config{perlpath} blib/script/pods2html $d/podR $d/podR/HTML";
-    RDiff("$d/podR_exp", "$d/podR") and Not; OK;
+    ok ! RDiff("$d/podR_exp", "$d/podR");
 }
 
 

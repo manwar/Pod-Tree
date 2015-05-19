@@ -3,11 +3,7 @@
 use strict;
 use Pod::Tree;
 
-my $N = 1;
-sub Not { print "not " }
-sub OK  { print "ok ", $N++, "\n" }
-
-print "1..9\n";
+use Test::More tests => 9;
 
 my $Dir = "t/tree.d";
 Parse();
@@ -25,7 +21,7 @@ sub Parse
 
 	my $actual   = $tree->dump;
 	my $expected = ReadFile("$Dir/$file.exp");
-	$actual eq $expected or Not; OK;
+	is $actual, $expected;
 
 	WriteFile("$Dir/$file.act", $actual);
     }
@@ -39,7 +35,7 @@ sub HasPod
     my $pod  = "$Dir/$file";
     $tree->load_file($pod) or die "Can't load $pod: $!\n";
 
-    ($tree->has_pod xor $expected) and Not; OK;
+    ok !($tree->has_pod xor $expected);
 }
 
 

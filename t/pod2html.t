@@ -4,15 +4,11 @@ use strict;
 use diagnostics;
 use Config;
 
-my $N    = 1;
-
-sub Not  { print "not " }
-sub OK   { print "ok ", $N++, "\n" }
-
 my @Files  = qw(cut for link list paragraph sequence);
 my $NFiles = @Files;
 
-print "1..", 3 * $NFiles, "\n";
+use Test::More;
+plan tests => 3 * $NFiles;
 
 my $Dir = "t/pod2html.d";
 
@@ -24,7 +20,7 @@ for my $file (@Files)
 
     unlink $html;
     system "$Config{perlpath} blib/script/podtree2html --notoc $pod $html";
-    Cmp($html, $exp) and Not; OK;
+    ok ! Cmp($html, $exp);
 }
 
 for my $file (@Files)
@@ -37,7 +33,7 @@ for my $file (@Files)
 
     unlink $html;
     system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template";
-    Cmp($html, $exp) and Not; OK;
+    ok ! Cmp($html, $exp);
 }
 
 for my $file (@Files)
@@ -50,7 +46,7 @@ for my $file (@Files)
 
     unlink $html;
     system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template color=red";
-    Cmp($html, $exp) and Not; OK;
+    ok ! Cmp($html, $exp);
 }
 
 
