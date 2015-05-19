@@ -12,52 +12,47 @@ plan tests => 3 * $NFiles;
 
 my $Dir = "t/pod2html.d";
 
-for my $file (@Files)
-{
-    my $pod  = "$Dir/$file.pod";
-    my $html = "$Dir/$file.html";
-    my $exp  = "$Dir/$file.exp";
+for my $file (@Files) {
+	my $pod  = "$Dir/$file.pod";
+	my $html = "$Dir/$file.html";
+	my $exp  = "$Dir/$file.exp";
 
-    unlink $html;
-    system "$Config{perlpath} blib/script/podtree2html --notoc $pod $html";
-    ok ! Cmp($html, $exp);
+	unlink $html;
+	system "$Config{perlpath} blib/script/podtree2html --notoc $pod $html";
+	ok !Cmp( $html, $exp );
 }
 
-for my $file (@Files)
-{
-    my $pod  	 = "$Dir/$file.pod";
-    my $html 	 = "$Dir/$file.html_t";
-    my $exp  	 = "$Dir/$file.exp_t";
-    my $template = "$Dir/template.txt";
-    my $values   = "$Dir/values.pl";
+for my $file (@Files) {
+	my $pod      = "$Dir/$file.pod";
+	my $html     = "$Dir/$file.html_t";
+	my $exp      = "$Dir/$file.exp_t";
+	my $template = "$Dir/template.txt";
+	my $values   = "$Dir/values.pl";
 
-    unlink $html;
-    system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template";
-    ok ! Cmp($html, $exp);
+	unlink $html;
+	system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template";
+	ok !Cmp( $html, $exp );
 }
 
-for my $file (@Files)
-{
-    my $pod  	 = "$Dir/$file.pod";
-    my $html 	 = "$Dir/$file.html_tv";
-    my $exp  	 = "$Dir/$file.exp_tv";
-    my $template = "$Dir/template.txt";
-    my $values   = "$Dir/values.pl";
+for my $file (@Files) {
+	my $pod      = "$Dir/$file.pod";
+	my $html     = "$Dir/$file.html_tv";
+	my $exp      = "$Dir/$file.exp_tv";
+	my $template = "$Dir/template.txt";
+	my $values   = "$Dir/values.pl";
 
-    unlink $html;
-    system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template color=red";
-    ok ! Cmp($html, $exp);
+	unlink $html;
+	system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template color=red";
+	ok !Cmp( $html, $exp );
 }
 
+sub Cmp {
+	my ( $a, $b ) = @_;
 
-sub Cmp
-{
-    my($a, $b) = @_;
+	local $/ = undef;
 
-    local $/ = undef;
+	open A, $a or die "Can't open $a: $!\n";
+	open B, $b or die "Can't open $b: $!\n";
 
-    open A, $a or die "Can't open $a: $!\n";
-    open B, $b or die "Can't open $b: $!\n";
-
-    <A> ne <B>
+	<A> ne <B>;
 }

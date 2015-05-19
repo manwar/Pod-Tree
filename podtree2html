@@ -6,31 +6,23 @@ use Pod::Tree::HTML;
 
 my %Options;
 $Options{toc} = 1;
-my $ok = GetOptions(\%Options,
-		    "base:s",
-		    "css:s",
-		    "toc!",
-		    "hr:i",
-		    "bgcolor:s",
-		    "text:s",
-		    "variables:s");
+my $ok = GetOptions( \%Options, "base:s", "css:s", "toc!", "hr:i", "bgcolor:s", "text:s", "variables:s" );
 $ok or die "Bad command line options\n";
 
 umask 0022;
 
 @ARGV < 2 and die "podtree2html PODfile HTMLfile [templateFile]\n";
-my($source, $dest, $template, @variables) = @ARGV;
+my ( $source, $dest, $template, @variables ) = @ARGV;
 my $html = new Pod::Tree::HTML $source, $dest;
 $html->set_options(%Options);
 
 do $Options{variables} if $Options{variables};
 
-for (@variables)
-{
-    chomp;
-    my($name, $value) = split /=/, $_, 2;
-    $name =~ s(^\$)();
-    ${$Pod::Tree::HTML::{$name}} = $value;
+for (@variables) {
+	chomp;
+	my ( $name, $value ) = split /=/, $_, 2;
+	$name =~ s(^\$)();
+	${ $Pod::Tree::HTML::{$name} } = $value;
 }
 
 $html->translate($template);

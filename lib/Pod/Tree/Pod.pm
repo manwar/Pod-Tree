@@ -8,280 +8,235 @@ use strict;
 use IO::File;
 use Pod::Tree;
 
+sub new {
+	my ( $class, $tree, $dest ) = @_;
+	defined $dest or die "Pod::Tree::Pod::new: not enough arguments\n";
 
-sub new
-{
-    my($class, $tree, $dest) = @_;
-    defined $dest or die "Pod::Tree::Pod::new: not enough arguments\n";
+	my $file = _resolve_dest($dest);
 
-    my $file = _resolve_dest($dest); 
+	my $pod = {
+		tree     => $tree,
+		root     => $tree->get_root,
+		file     => $file,
+		interior => 0,
+		link     => 0
+	};
 
-    my $pod  = { tree     => $tree,
-		 root     => $tree->get_root,
-		 file     => $file,
-		 interior => 0,
-		 link     => 0  };
-    
-    bless $pod, $class
+	bless $pod, $class;
 }
 
+sub _resolve_dest {
+	my $dest = shift;
 
-sub _resolve_dest
-{
-    my $dest = shift;
+	ref $dest and return $dest;
 
-    ref $dest and return $dest;
-
-    my $fh = new IO::File;
-    $fh->open(">$dest") or die "Pod::Tree::Pod::new: Can't open $dest: $!\n";
-    $fh
+	my $fh = new IO::File;
+	$fh->open(">$dest") or die "Pod::Tree::Pod::new: Can't open $dest: $!\n";
+	$fh;
 }
 
-
-sub translate
-{
-    my $pod  = shift;
-    my $root = $pod->{root};
-    $pod->_emit_children($root);
+sub translate {
+	my $pod  = shift;
+	my $root = $pod->{root};
+	$pod->_emit_children($root);
 }
 
+sub _emit_children {
+	my ( $pod, $node ) = @_;
 
-sub _emit_children
-{
-    my($pod, $node) = @_;
+	my $children = $node->get_children;
 
-    my $children = $node->get_children;
-
-    for my $child (@$children)
-    {
-	$pod->_emit_node($child);
-    }
+	for my $child (@$children) {
+		$pod->_emit_node($child);
+	}
 }
 
+sub _emit_siblings {
+	my ( $pod, $node ) = @_;
 
-sub _emit_siblings
-{
-    my($pod, $node) = @_;
+	my $siblings = $node->get_siblings;
 
-    my $siblings = $node->get_siblings;
-
-    for my $sibling (@$siblings)
-    {
-	$pod->_emit_node($sibling);
-    }
+	for my $sibling (@$siblings) {
+		$pod->_emit_node($sibling);
+	}
 }
 
+sub _emit_node {
+	my ( $pod, $node ) = @_;
+	my $type = $node->{type};
 
-sub _emit_node
-{
-    my($pod, $node) = @_;
-    my $type = $node->{type};
-
-    for ($type)
-    {
-	/code/     and $pod->_emit_code    ($node);
-	/command/  and $pod->_emit_command ($node);
-	/for/      and $pod->_emit_for     ($node);
-	/item/     and $pod->_emit_item    ($node);
-	/list/     and $pod->_emit_list    ($node);
-	/ordinary/ and $pod->_emit_ordinary($node);
-	/sequence/ and $pod->_emit_sequence($node);
-	/text/     and $pod->_emit_text    ($node);
-	/verbatim/ and $pod->_emit_verbatim($node);
-    }
+	for ($type) {
+		/code/     and $pod->_emit_code($node);
+		/command/  and $pod->_emit_command($node);
+		/for/      and $pod->_emit_for($node);
+		/item/     and $pod->_emit_item($node);
+		/list/     and $pod->_emit_list($node);
+		/ordinary/ and $pod->_emit_ordinary($node);
+		/sequence/ and $pod->_emit_sequence($node);
+		/text/     and $pod->_emit_text($node);
+		/verbatim/ and $pod->_emit_verbatim($node);
+	}
 }
 
+sub _emit_code {
+	my ( $pod, $node ) = @_;
+	my $file = $pod->{file};
+	my $text = $node->get_text;
 
-sub _emit_code
-{
-    my($pod, $node) = @_;
-    my $file = $pod->{file};
-    my $text = $node->get_text;
-
-    $file->print($text);
+	$file->print($text);
 }
 
+sub _emit_command {
+	my ( $pod, $node ) = @_;
+	my $file = $pod->{file};
+	my $raw  = $node->get_raw;
 
-sub _emit_command
-{
-    my($pod, $node) = @_;
-    my $file = $pod->{file};
-    my $raw  = $node->get_raw;
-
-    $file->print($raw);
+	$file->print($raw);
 }
 
+sub _emit_for {
+	my ( $pod, $node ) = @_;
+	my $file     = $pod->{file};
+	my $brackets = $node->get_brackets;
 
-sub _emit_for
-{
-    my($pod, $node) = @_;
-    my $file        = $pod->{file};
-    my $brackets    = $node->get_brackets;
-
-    $file->print($brackets->[0]);
-    $file->print($node->get_text);
-    $file->print($brackets->[1]) if $brackets->[1];
+	$file->print( $brackets->[0] );
+	$file->print( $node->get_text );
+	$file->print( $brackets->[1] ) if $brackets->[1];
 }
 
+sub _emit_item {
+	my ( $pod, $node ) = @_;
+	my $file = $pod->{file};
 
-sub _emit_item
-{
-    my($pod, $node) = @_;
-    my $file      = $pod->{file};
+	$file->print("=item ");
+	$pod->_emit_children($node);
 
-    $file->print("=item ");
-    $pod->_emit_children($node);
-
-    $pod->_emit_siblings($node);
+	$pod->_emit_siblings($node);
 }
 
+sub _emit_list {
+	my ( $pod, $node ) = @_;
+	my $file = $pod->{file};
 
-sub _emit_list
-{
-    my($pod, $node) = @_;
-    my $file = $pod->{file};
+	my $over = $node->get_raw;
+	$file->print($over);
 
-    my $over = $node->get_raw;
-    $file->print($over);
+	$pod->_emit_children($node);
 
-    $pod->_emit_children($node);
-
-    my $back = $node->get_back;
-    $back and 
-	$file->print($back->get_raw);
+	my $back = $node->get_back;
+	$back
+		and $file->print( $back->get_raw );
 }
 
+sub _emit_ordinary {
+	my ( $pod, $node ) = @_;
 
-sub _emit_ordinary
-{
-    my($pod, $node) = @_;
-
-    $pod->_emit_children($node);
+	$pod->_emit_children($node);
 }
 
+sub _emit_sequence {
+	my ( $pod, $node ) = @_;
 
-sub _emit_sequence
-{
-    my($pod, $node) = @_;
+	$pod->{interior}++;
 
-    $pod->{interior}++;
+	for ( $node->get_letter ) {
+		/I|B|C|E|F|S|X/ and $pod->_emit_element($node), last;
+		/L/             and $pod->_emit_link($node),    last;
+	}
 
-    for ($node->get_letter)
-    {
-	/I|B|C|E|F|S|X/ and $pod->_emit_element($node), last;
-	/L/             and $pod->_emit_link   ($node), last;
-    }
-
-    $pod->{interior}--;
+	$pod->{interior}--;
 }
 
+sub _emit_element {
+	my ( $pod, $node ) = @_;
 
-sub _emit_element
-{
-    my($pod, $node) = @_;
+	my $letter = $node->get_letter;
+	my $file   = $pod->{file};
 
-    my $letter = $node->get_letter;
-    my $file   = $pod->{file};
-
-    $file->print("$letter<");
-    $pod->_emit_children($node);
-    $file->print(">");
-}
-
-
-sub _emit_link
-{
-    my($pod, $node) = @_;
-
-    my $file = $pod->{file};
-
-    $file->print("L<");
-
-    my $children = $node->get_raw_kids;
-    for my $child (@$children)
-    {
-	$pod->_emit_node($child);
-    }
-
-    $file->print(">");
-}
-
-
-sub _emit_link_hide
-{
-    my($pod, $node) = @_;
-
-    my $file     = $pod->{file};
-    my $target   = $node->get_target;
-    my $page     = $target->get_page;
-    my $section  = $target->get_section;
-    my $slash    = $section ? '/' : '';
-    my $link     = "$page$slash$section";
-
-    if ($link eq $node->get_deep_text)
-    {
-	$file->print("L<");
+	$file->print("$letter<");
 	$pod->_emit_children($node);
 	$file->print(">");
-    }
-    else
-    {
-	$pod->{link}++;
+}
+
+sub _emit_link {
+	my ( $pod, $node ) = @_;
+
+	my $file = $pod->{file};
 
 	$file->print("L<");
-	$pod->_emit_children($node);
 
-	$page    = $pod->_escape($page   );
-	$section = $pod->_escape($section);
-	$file->print("|$page$slash$section>");
+	my $children = $node->get_raw_kids;
+	for my $child (@$children) {
+		$pod->_emit_node($child);
+	}
 
-	$pod->{link}--;
-    }
+	$file->print(">");
 }
 
+sub _emit_link_hide {
+	my ( $pod, $node ) = @_;
 
-sub _emit_text
-{
-    my($pod, $node) = @_;
-    my $file = $pod->{file};
-    my $text = $node->get_text;
+	my $file    = $pod->{file};
+	my $target  = $node->get_target;
+	my $page    = $target->get_page;
+	my $section = $target->get_section;
+	my $slash   = $section ? '/' : '';
+	my $link    = "$page$slash$section";
 
-    $text = $pod->_escape($text);
-    $file->print($text);
+	if ( $link eq $node->get_deep_text ) {
+		$file->print("L<");
+		$pod->_emit_children($node);
+		$file->print(">");
+	}
+	else {
+		$pod->{link}++;
+
+		$file->print("L<");
+		$pod->_emit_children($node);
+
+		$page    = $pod->_escape($page);
+		$section = $pod->_escape($section);
+		$file->print("|$page$slash$section>");
+
+		$pod->{link}--;
+	}
 }
 
+sub _emit_text {
+	my ( $pod, $node ) = @_;
+	my $file = $pod->{file};
+	my $text = $node->get_text;
 
-sub _escape
-{
-    my($pod, $text) = @_;
-
-    $text =~ s/^=(\w)/=Z<>$1/;
-
-    if ($pod->{interior})
-    {
-	$text =~ s/([A-Z])</$1E<lt>/g;
-	$text =~ s/>/E<gt>/g;
-    }
-
-    if ($pod->{link})
-    {
-	$text =~ s(\|)(E<verbar>)g;
-	$text =~ s(/)(E<sol>)g;
-    }
-
-    $text =~ s/([\x80-\xff])/sprintf("E<%d>", ord($1))/eg;
-
-    $text
+	$text = $pod->_escape($text);
+	$file->print($text);
 }
 
+sub _escape {
+	my ( $pod, $text ) = @_;
 
-sub _emit_verbatim
-{
-    my($pod, $node) = @_;
-    my $file = $pod->{file};
-    my $text = $node->get_text;
+	$text =~ s/^=(\w)/=Z<>$1/;
 
-    $file->print($text);
+	if ( $pod->{interior} ) {
+		$text =~ s/([A-Z])</$1E<lt>/g;
+		$text =~ s/>/E<gt>/g;
+	}
+
+	if ( $pod->{link} ) {
+		$text =~ s(\|)(E<verbar>)g;
+		$text =~ s(/)(E<sol>)g;
+	}
+
+	$text =~ s/([\x80-\xff])/sprintf("E<%d>", ord($1))/eg;
+
+	$text;
+}
+
+sub _emit_verbatim {
+	my ( $pod, $node ) = @_;
+	my $file = $pod->{file};
+	my $text = $node->get_text;
+
+	$file->print($text);
 }
 
 1

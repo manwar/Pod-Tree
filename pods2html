@@ -9,186 +9,165 @@ use IO::File;
 use Pod::Tree::HTML;
 use File::Spec;
 
-my %Options = (bgcolor => '#ffffff',
-	       text    => '#000000',
-	       hr      => 1,
-	       toc     => 1 );
+my %Options = (
+	bgcolor => '#ffffff',
+	text    => '#000000',
+	hr      => 1,
+	toc     => 1
+);
 
-my $ok = GetOptions(\%Options, "base:s", 
-		               "css:s",
-		               "bgcolor:s",
-		    	       "empty",
-		               "index:s",
-		               "module",
-		               "text:s",
-		               "toc!", 
-		               "hr:i",
-		               "variables:s");
+my $ok = GetOptions(
+	\%Options, "base:s", "css:s", "bgcolor:s", "empty", "index:s",
+	"module",  "text:s", "toc!",  "hr:i",      "variables:s"
+);
 $ok or die "Bad command line options\n";
 
 my %Index;
 my @Dirs;
-my($PodDir, $HTMLDir, $Template, @Variables) = @ARGV;
+my ( $PodDir, $HTMLDir, $Template, @Variables ) = @ARGV;
 $HTMLDir or die "pods2html PodDir HTMLDir\n";
 
 $PodDir  = canonpath File::Spec $PodDir;
-$HTMLDir = rel2abs   File::Spec $HTMLDir;
+$HTMLDir = rel2abs File::Spec $HTMLDir;
 
 mkpath($HTMLDir);
 
 do $Options{variables} if $Options{variables};
 
-for (@Variables)
-{
-    chomp;
-    my($name, $value) = split /=/, $_, 2;
-    $name =~ s(^\$)();
-    ${$Pod::Tree::HTML::{$name}} = $value;
+for (@Variables) {
+	chomp;
+	my ( $name, $value ) = split /=/, $_, 2;
+	$name =~ s(^\$)();
+	${ $Pod::Tree::HTML::{$name} } = $value;
 }
 
 umask 0022;
-find({ wanted   => \&Translate,
-       no_chdir => 1          }, $PodDir);
-Index  () if $Options{index};
+find(
+	{
+		wanted   => \&Translate,
+		no_chdir => 1
+	},
+	$PodDir
+);
+Index() if $Options{index};
 Cleanup() unless $Options{empty};
 
-
-sub Translate
-{
-    -d and &Translate_Dir;
-    -f and &Translate_POD;
+sub Translate {
+	-d and &Translate_Dir;
+	-f and &Translate_POD;
 }
 
-sub MkDir
-{
-    my $dir = shift;
+sub MkDir {
+	my $dir = shift;
 
-    -d $dir and return;
-    mkdir $dir, 0755 or die "Can't mkdir $dir: $!\n";
-    push @Dirs, $dir;
+	-d $dir and return;
+	mkdir $dir, 0755 or die "Can't mkdir $dir: $!\n";
+	push @Dirs, $dir;
 }
 
-sub Translate_Dir
-{
-    my $dir = $File::Find::name;
+sub Translate_Dir {
+	my $dir = $File::Find::name;
 
-    if ($HTMLDir eq rel2abs File::Spec $dir)
-    {
-	$File::Find::prune = 1;
-	return;
-    }
+	if ( $HTMLDir eq rel2abs File::Spec $dir) {
+		$File::Find::prune = 1;
+		return;
+	}
 
-    if ($Options{module} and ( m(/t$) or m(/blib$) ) )
-    {
-	$File::Find::prune = 1;
-	return;
-    }
+	if ( $Options{module} and ( m(/t$) or m(/blib$) ) ) {
+		$File::Find::prune = 1;
+		return;
+	}
 
-    $dir =~ s/^\Q$PodDir/$HTMLDir/o;
-    -d $dir or MkDir $dir;
-    print "$File::Find::name\n";
+	$dir =~ s/^\Q$PodDir/$HTMLDir/o;
+	-d $dir or MkDir $dir;
+	print "$File::Find::name\n";
 }
 
+sub Translate_POD {
+	m( \.(pm|pod)$ )x or return;
+	my $source = $File::Find::name;
 
-sub Translate_POD
-{
-    m( \.(pm|pod)$ )x or return;
-    my $source = $File::Find::name;
+	Hidden($source) and return;
+	print "$source\n";
 
-    Hidden($source) and return;
-    print "$source\n";
+	my $dest = $source;
+	$dest =~ s/^\Q$PodDir/$HTMLDir/o;
+	$dest =~ s( \.\w+$ )(.html)x;
 
-    my $dest = $source;
-    $dest =~ s/^\Q$PodDir/$HTMLDir/o;
-    $dest =~ s( \.\w+$ )(.html)x;
+	my $depth = Depth($source);
 
-    my $depth = Depth($source);
+	my $pod = $source;
+	$pod =~ s(^$PodDir/)();
+	$pod =~ s( \.\w+$ )()x;
+	$Index{$pod} = 1;
 
-    my $pod = $source;
-    $pod =~ s(^$PodDir/)();
-    $pod =~ s( \.\w+$ )()x;
-    $Index{$pod} = 1;
-
-    my $html = new Pod::Tree::HTML $source, $dest, %Options;
-    $html->set_options(depth => $depth);
-    $html->translate($Template);
+	my $html = new Pod::Tree::HTML $source, $dest, %Options;
+	$html->set_options( depth => $depth );
+	$html->translate($Template);
 }
 
-sub Hidden
-{
-    my $source = shift;
-       $source =~ m(\.pm$) or return 0;
-       $source =~ s(\.pm$)(.pod);
-    -e $source
+sub Hidden {
+	my $source = shift;
+	$source =~ m(\.pm$) or return 0;
+	$source =~ s(\.pm$)(.pod);
+	-e $source;
 }
 
-sub Depth
-{
-    my $source   = shift;
-    my $tree     = new Pod::Tree;
-       $tree->load_file($source);
-    my $children = $tree->get_root->get_children;
-    my @pod      = grep { is_pod $_ } @$children;
-    my $node1    = $pod[1];
-       $node1 or return '';
+sub Depth {
+	my $source = shift;
+	my $tree   = new Pod::Tree;
+	$tree->load_file($source);
+	my $children = $tree->get_root->get_children;
+	my @pod      = grep { is_pod $_ } @$children;
+	my $node1    = $pod[1];
+	$node1 or return '';
 
-    my $text     = $node1->get_deep_text;
-    my($name)    = split m(\s+-+\s+), $text;
-       $name     =~ s(^\s+)();
+	my $text = $node1->get_deep_text;
+	my ($name) = split m(\s+-+\s+), $text;
+	$name =~ s(^\s+)();
 
-    my @name     = split /::/, $name;
-       @name-1
+	my @name = split /::/, $name;
+	@name - 1;
 }
 
-sub Index
-{
-    my $index   = "$HTMLDir/index.html";
-    my $fh      = new IO::File ">$index";
-    defined $fh or die "Can't open $index: $!\n";
+sub Index {
+	my $index = "$HTMLDir/index.html";
+	my $fh    = new IO::File ">$index";
+	defined $fh or die "Can't open $index: $!\n";
 
-    my $stream  = new HTML::Stream $fh;
+	my $stream = new HTML::Stream $fh;
 
-    my $title   = $Options{index};
-    my $bgcolor = $Options{bgcolor};
-    my $text 	= $Options{text};
+	my $title   = $Options{index};
+	my $bgcolor = $Options{bgcolor};
+	my $text    = $Options{text};
 
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
 
-    Emit_Entries($stream);
+	Emit_Entries($stream);
 
-    $stream->_BODY->_HTML;
+	$stream->_BODY->_HTML;
 }
 
+sub Emit_Entries {
+	my $stream = shift;
 
-sub Emit_Entries
-{
-    my $stream = shift;
+	$stream->UL;
 
-    $stream->UL;
+	for my $entry ( sort keys %Index ) {
+		$stream->LI->A( HREF => "$entry.html" )->t($entry)->_A->_LI;
+	}
 
-    for my $entry (sort keys %Index)
-    {
-	$stream->LI
-	       ->A(HREF => "$entry.html")
-	       ->t($entry)
-	       ->_A
-	       ->_LI;
-    }
-
-    $stream->_UL;
+	$stream->_UL;
 }
 
-sub Cleanup
-{
-    while (@Dirs)
-    {
-	my $dir = pop @Dirs;
-	rmdir $dir;  # does nothing unless $dir is empty
-    }
+sub Cleanup {
+	while (@Dirs) {
+		my $dir = pop @Dirs;
+		rmdir $dir;    # does nothing unless $dir is empty
+	}
 }
 
 __END__

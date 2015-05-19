@@ -2,71 +2,58 @@ use strict;
 
 package Pod::Tree::PerlMap;
 
+sub new {
+	my ($class) = @_;
 
-sub new
-{
-    my($class) = @_;
+	my $perl_map = { prefix => '' };
 
-    my $perl_map = { prefix => '' };
-
-    bless $perl_map, $class
+	bless $perl_map, $class;
 }
 
+sub set_depth {
+	my ( $perl_map, $depth ) = @_;
 
-sub set_depth
-{
-    my($perl_map, $depth) = @_;
-
-    $perl_map->{prefix} = '../' x $depth;
+	$perl_map->{prefix} = '../' x $depth;
 }
 
+sub add_page {
+	my ( $perl_map, $page, $file ) = @_;
 
-sub add_page
-{
-    my($perl_map, $page, $file) = @_;
-
-    $perl_map->{page}{$page} = $file;
+	$perl_map->{page}{$page} = $file;
 }
 
+sub add_func {
+	my ( $perl_map, $func, $file ) = @_;
 
-sub add_func
-{
-    my($perl_map, $func, $file) = @_;
-
-    $perl_map->{func}{$func} = $file;
+	$perl_map->{func}{$func} = $file;
 }
 
+sub force_func {
+	my ( $perl_map, $force_func ) = @_;
 
-sub force_func
-{
-    my($perl_map, $force_func) = @_;
-
-    $perl_map->{force_func} = $force_func;
+	$perl_map->{force_func} = $force_func;
 }
 
+sub map {
+	my ( $perl_map, $base, $page, $section ) = @_;
 
-sub map
-{
-    my($perl_map, $base, $page, $section) = @_;
-    # print "map $base, $page, $section ->";
+	# print "map $base, $page, $section ->";
 
-    my $prefix     = $perl_map->{prefix};
-    my $force_func = $perl_map->{force_func};
-    my $func       = (split m(\s+), $section)[0];  # e.g.  L<"eval BLOCK">
-    my $file       = $perl_map->{func}{$func};
+	my $prefix     = $perl_map->{prefix};
+	my $force_func = $perl_map->{force_func};
+	my $func       = ( split m(\s+), $section )[0];    # e.g.  L<"eval BLOCK">
+	my $file       = $perl_map->{func}{$func};
 
-    if ( ($page eq 'perlfunc' or $page eq '' and $force_func) and $file)
-    {
-	$page    = $prefix . 'pod/func/' . $file;
-	$section = '';
-    }
-    elsif ($perl_map->{page}{$page})
-    {
-	$page = $prefix . $perl_map->{page}{$page};
-    }
+	if ( ( $page eq 'perlfunc' or $page eq '' and $force_func ) and $file ) {
+		$page    = $prefix . 'pod/func/' . $file;
+		$section = '';
+	}
+	elsif ( $perl_map->{page}{$page} ) {
+		$page = $prefix . $perl_map->{page}{$page};
+	}
 
-    # print "$base, $page, $section\n";
-    ($base, $page, $section)
+	# print "$base, $page, $section\n";
+	( $base, $page, $section );
 }
 
 1

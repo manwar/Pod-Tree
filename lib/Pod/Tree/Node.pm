@@ -7,884 +7,776 @@ package Pod::Tree::Node;
 use strict;
 use Pod::Escapes ();
 
-
 $Pod::Tree::Node::VERSION = '1.10';
 
-
-sub root  # ctor
+sub root    # ctor
 {
-    my($class, $children) = @_;
+	my ( $class, $children ) = @_;
 
-    my $node = { type     => 'root',
-		 children => $children };
+	my $node = {
+		type     => 'root',
+		children => $children
+	};
 
-    bless $node, $class
+	bless $node, $class;
 }
 
-
-sub code #ctor
+sub code    #ctor
 {
-    my($class, $paragraph) = @_;
+	my ( $class, $paragraph ) = @_;
 
-    my $node = { type => 'code',
-		 text => $paragraph };
+	my $node = {
+		type => 'code',
+		text => $paragraph
+	};
 
-    bless $node, $class
+	bless $node, $class;
 }
 
-
-sub verbatim  # ctor
+sub verbatim    # ctor
 {
-    my($class, $paragraph) = @_;
+	my ( $class, $paragraph ) = @_;
 
-    my $node = { type => 'verbatim',
-		 raw  => $paragraph,
-		 text => $paragraph };
+	my $node = {
+		type => 'verbatim',
+		raw  => $paragraph,
+		text => $paragraph
+	};
 
-    bless $node, $class
+	bless $node, $class;
 }
-
 
 my %Argumentative = map { $_ => 1 } qw(=over
-				       =for =begin =end);
+	=for =begin =end);
 
-sub command  # ctor
+sub command    # ctor
 {
-    my($class, $paragraph) = @_;
-    my($command, $arg, $text);
+	my ( $class, $paragraph ) = @_;
+	my ( $command, $arg, $text );
 
-    ($command) = split(/\s/, $paragraph);
+	($command) = split( /\s/, $paragraph );
 
-    if ($Argumentative{$command})
-    {
-	($command, $arg, $text) = split(/\s+/, $paragraph, 3);
-    }
-    else
-    {
-	($command,       $text) = split(/\s+/, $paragraph, 2);
-	$arg = '';
-    }
-
-    $command =~ s/^=//;
-
-    my $node = { type    => 'command',
-		 raw	 => $paragraph,
-		 command => $command,
-		 arg     => $arg,
-		 text    => $text };
-
-    bless $node, $class
-}
-
-
-sub ordinary  # ctor
-{
-    my($class, $paragraph) = @_;
-
-    my $node = { type => 'ordinary',
-		 raw  => $paragraph,
-		 text => $paragraph };
-
-    bless $node, $class
-}
-
-
-sub letter  # ctor
-{
-    my($class, $token) = @_;
-
-    my $node = { type   => 'letter',
-		 letter => substr($token, 0, 1),
-		 width  => $token =~ tr/</</     };
-
-    bless $node, $class
-}    
-
-
-sub sequence  # ctor
-{
-    my($class, $letter, $children) = @_;
-
-    my $node = {  type     => 'sequence',
-		 'letter'  => $letter->{'letter'},
-		  children => $children };
-
-    bless $node, $class
-}    
-
-
-sub text  # ctor
-{
-    my($class, $text) = @_;
-
-    my $node = { type => 'text',
-		 text => $text };
-
-    bless $node, $class
-}
-
-
-sub target  # ctor
-{
-    my($class, $children) = @_;
-
-    my $node = bless { type     => 'target',
-		       children => $children }, $class;
-
-    $node->unescape;
-    my $text = $node->get_deep_text;
-
-    if ($text =~ m(^[A-Za-z]+:(?!:))) # a URL
-    {
-	$node->{page   } = $text;
-	$node->{section} = '';
-	$node->{domain } = 'HTTP';
-    }
-    else                              # a POD link
-    {
-	my($page, $section) = SplitTarget($text);
-	$node->{page   } = $page;
-	$node->{section} = $section;
-	$node->{domain } = 'POD';
-    }
-
-    $node
-}
-
-
-sub SplitTarget
-{
-    my $text = shift;
-    my($page, $section);
-
-    if ($text =~ /^"(.*)"$/s)     # L<"sec">;
-    {
-	$page    = '';
-	$section = $1;
-    }
-    else                          # all other cases
-    {
-	($page, $section) = (split(m(/), $text, 2), '', '');
-
-	$page    =~ s/\s*\(\d\)$//;    # ls (1) -> ls
-	$section =~ s( ^" | "$ )()xg;  # lose the quotes
-
-	# L<section in this man page> (without quotes)
-	if ($page !~ /^[\w.-]+(::[\w.-]+)*$/ and $section eq '')   
-	{                            
-	    $section = $page;
-	    $page = '';
+	if ( $Argumentative{$command} ) {
+		( $command, $arg, $text ) = split( /\s+/, $paragraph, 3 );
 	}
-    }
+	else {
+		( $command, $text ) = split( /\s+/, $paragraph, 2 );
+		$arg = '';
+	}
 
-    $section =~ s(   \s*\n\s*   )( )xg;  # close line breaks
-    $section =~ s( ^\s+ | \s+$  )()xg;   # clip leading and trailing WS
-    
-    ($page, $section)
+	$command =~ s/^=//;
+
+	my $node = {
+		type    => 'command',
+		raw     => $paragraph,
+		command => $command,
+		arg     => $arg,
+		text    => $text
+	};
+
+	bless $node, $class;
 }
 
-
-sub link  # ctor
+sub ordinary    # ctor
 {
-    my($class, $node, $page, $section) = @_;
+	my ( $class, $paragraph ) = @_;
 
-    my $target = bless { type     => 'target',
-			 domain   => 'POD',
-			 children => [ $node ],
-			 page     => $page,
-		         section  => $section }, $class;
+	my $node = {
+		type => 'ordinary',
+		raw  => $paragraph,
+		text => $paragraph
+	};
 
-
-    my $link =   bless { type     => 'sequence',
-			 letter   => 'L',
-			 children => [ $node ],
-			 target   => $target }, $class;
-
-    $link
+	bless $node, $class;
 }
 
+sub letter    # ctor
+{
+	my ( $class, $token ) = @_;
 
-sub is_code     { shift->{type} eq 'code'     }
-sub is_command  { shift->{type} eq 'command'  }
-sub is_for      { shift->{type} eq 'for'      }
-sub is_item     { shift->{type} eq 'item'     }
-sub is_letter   { shift->{type} eq 'letter'   }
-sub is_list     { shift->{type} eq 'list'     }
+	my $node = {
+		type => 'letter',
+		letter => substr( $token, 0, 1 ),
+		width  => $token =~ tr/</</
+	};
+
+	bless $node, $class;
+}
+
+sub sequence    # ctor
+{
+	my ( $class, $letter, $children ) = @_;
+
+	my $node = {
+		type     => 'sequence',
+		'letter' => $letter->{'letter'},
+		children => $children
+	};
+
+	bless $node, $class;
+}
+
+sub text    # ctor
+{
+	my ( $class, $text ) = @_;
+
+	my $node = {
+		type => 'text',
+		text => $text
+	};
+
+	bless $node, $class;
+}
+
+sub target    # ctor
+{
+	my ( $class, $children ) = @_;
+
+	my $node = bless {
+		type     => 'target',
+		children => $children
+	}, $class;
+
+	$node->unescape;
+	my $text = $node->get_deep_text;
+
+	if ( $text =~ m(^[A-Za-z]+:(?!:)) )    # a URL
+	{
+		$node->{page}    = $text;
+		$node->{section} = '';
+		$node->{domain}  = 'HTTP';
+	}
+	else                                   # a POD link
+	{
+		my ( $page, $section ) = SplitTarget($text);
+		$node->{page}    = $page;
+		$node->{section} = $section;
+		$node->{domain}  = 'POD';
+	}
+
+	$node;
+}
+
+sub SplitTarget {
+	my $text = shift;
+	my ( $page, $section );
+
+	if ( $text =~ /^"(.*)"$/s )    # L<"sec">;
+	{
+		$page    = '';
+		$section = $1;
+	}
+	else                           # all other cases
+	{
+		( $page, $section ) = ( split( m(/), $text, 2 ), '', '' );
+
+		$page =~ s/\s*\(\d\)$//;         # ls (1) -> ls
+		$section =~ s( ^" | "$ )()xg;    # lose the quotes
+
+		# L<section in this man page> (without quotes)
+		if ( $page !~ /^[\w.-]+(::[\w.-]+)*$/ and $section eq '' ) {
+			$section = $page;
+			$page    = '';
+		}
+	}
+
+	$section =~ s(   \s*\n\s*   )( )xg;    # close line breaks
+	$section =~ s( ^\s+ | \s+$  )()xg;     # clip leading and trailing WS
+
+	( $page, $section );
+}
+
+sub link                                   # ctor
+{
+	my ( $class, $node, $page, $section ) = @_;
+
+	my $target = bless {
+		type     => 'target',
+		domain   => 'POD',
+		children => [$node],
+		page     => $page,
+		section  => $section
+	}, $class;
+
+	my $link = bless {
+		type     => 'sequence',
+		letter   => 'L',
+		children => [$node],
+		target   => $target
+	}, $class;
+
+	$link;
+}
+
+sub is_code     { shift->{type} eq 'code' }
+sub is_command  { shift->{type} eq 'command' }
+sub is_for      { shift->{type} eq 'for' }
+sub is_item     { shift->{type} eq 'item' }
+sub is_letter   { shift->{type} eq 'letter' }
+sub is_list     { shift->{type} eq 'list' }
 sub is_ordinary { shift->{type} eq 'ordinary' }
-sub is_root     { shift->{type} eq 'root'     }
+sub is_root     { shift->{type} eq 'root' }
 sub is_sequence { shift->{type} eq 'sequence' }
-sub is_text     { shift->{type} eq 'text'     }
+sub is_text     { shift->{type} eq 'text' }
 sub is_verbatim { shift->{type} eq 'verbatim' }
 
-sub is_link
-{
-    my $node = shift;
-    is_sequence $node and $node->{'letter'} eq 'L'
+sub is_link {
+	my $node = shift;
+	is_sequence $node and $node->{'letter'} eq 'L';
 }
 
-sub is_pod
-{
-    my $node = shift;
-    not is_code $node and not is_c_cut $node and not is_c_pod $node
+sub is_pod {
+	my $node = shift;
+	not is_code $node and not is_c_cut $node and not is_c_pod $node;
 }
 
-sub is_c_head1
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'head1' 
+sub is_c_head1 {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'head1';
 }
 
-sub is_c_head2
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'head2' 
+sub is_c_head2 {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'head2';
 }
 
-sub is_c_head3
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'head3' 
+sub is_c_head3 {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'head3';
 }
 
-sub is_c_head4
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'head4' 
+sub is_c_head4 {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'head4';
 }
 
-sub is_c_cut
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'cut' 
+sub is_c_cut {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'cut';
 }
 
-sub is_c_pod
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'pod' 
+sub is_c_pod {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'pod';
 }
 
-sub is_c_over
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'over' 
+sub is_c_over {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'over';
 }
 
-sub is_c_back 
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'back' 
+sub is_c_back {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'back';
 }
 
-sub is_c_item
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'item' 
+sub is_c_item {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'item';
 }
 
-sub is_c_for
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'for' 
+sub is_c_for {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'for';
 }
 
-sub is_c_begin
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'begin' 
+sub is_c_begin {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'begin';
 }
 
-sub is_c_end
-{ 
-    my $node = shift; 
-    $node->{type} eq 'command' and $node->{'command'} eq 'end' 
+sub is_c_end {
+	my $node = shift;
+	$node->{type} eq 'command' and $node->{'command'} eq 'end';
 }
 
-sub get_arg       { shift->{ arg       } }
-sub get_back      { shift->{ back      } }
-sub get_children  { shift->{ children  } }
-sub get_command   { shift->{'command'  } }
-sub get_domain    { shift->{ domain    } }
-sub get_item_type { shift->{ item_type } }
-sub get_letter    { shift->{'letter'   } }
-sub get_list_type { shift->{ list_type } }
-sub get_page      { shift->{ page      } }
-sub get_raw       { shift->{ raw       } }
-sub get_raw_kids  { shift->{ raw_kids  } }
-sub get_section   { shift->{ section   } }
-sub get_siblings  { shift->{ siblings  } }
-sub get_target    { shift->{'target'   } }
-sub get_text      { shift->{'text'     } }
-sub get_type      { shift->{'type'     } }
-sub get_url       { shift->{'url'      } }
+sub get_arg       { shift->{arg} }
+sub get_back      { shift->{back} }
+sub get_children  { shift->{children} }
+sub get_command   { shift->{'command'} }
+sub get_domain    { shift->{domain} }
+sub get_item_type { shift->{item_type} }
+sub get_letter    { shift->{'letter'} }
+sub get_list_type { shift->{list_type} }
+sub get_page      { shift->{page} }
+sub get_raw       { shift->{raw} }
+sub get_raw_kids  { shift->{raw_kids} }
+sub get_section   { shift->{section} }
+sub get_siblings  { shift->{siblings} }
+sub get_target    { shift->{'target'} }
+sub get_text      { shift->{'text'} }
+sub get_type      { shift->{'type'} }
+sub get_url       { shift->{'url'} }
 
-sub get_brackets  
-{ 
-    my $node     = shift;
-    my $brackets = $node->{brackets};
-    $brackets
+sub get_brackets {
+	my $node     = shift;
+	my $brackets = $node->{brackets};
+	$brackets;
 }
 
+sub get_deep_text {
+	my $node = shift;
 
-sub get_deep_text
-{
-    my $node = shift;
-
-    for ($node->get_type)
-    {
-	/text/     and return $node->{'text'};
-	/verbatim/ and return $node->{'text'};
-    }
-
-    join '', map { $_->get_deep_text } @{$node->{children}}
-}
-
-
-sub force_text
-{
-    my($node, $text) = @_;
-    $node->{ type } = 'text';
-    $node->{'text'} = $text;
-    undef $node->{children};
-}
-
-
-sub force_for
-{
-    my $node = shift;
-    $node->{type    } = 'for';
-
-    my($bracket) = $node->{raw} =~ /^(=\w+\s+\w+\s+)/;
-
-    $node->{brackets} = [ $bracket ];
-}
-
-
-sub parse_begin
-{
-    my($node, $nodes) = @_;
-
-    my $foreign;
-    my @raw;
-    while (@$nodes)
-    {
-	$foreign = shift @$nodes;
-	is_c_end $foreign and last;
-	push @raw, $foreign->{'raw'};
-    }
-    $node->{'text'} = join '', @raw;
-
-    my $interpreter = $foreign->{arg};
-    $interpreter and $interpreter ne $node->{arg} and
-	$node->_warn("Mismatched =begin/=end tags around\n$node->{'text'}");
-
-    $node->{type    } = 'for';
-    $node->{brackets} = [ $node->{raw}, $foreign->{raw} ];
-}
-
-
-sub set_children
-{
-    my($node, $children) = @_;
-    $node->{children} = $children;
-}
-
-
-sub make_sequences
-{
-    my $node          = shift;
-    my $text          = $node->{'text'};
-    my @tokens        = split /( [A-Z]<<+\s+ | [A-Z]< | \s+>>+ | > )/x, $text;
-    my $sequences     = _parse_text(\@tokens);
-    $node->{children} = $sequences;
-}
-
-
-sub _parse_text
-{
-    my $tokens = shift;
-    my(@stack, @width);
-
-    while (@$tokens)
-    {
-	my $token = shift @$tokens;
-	length $token or next;
-
-	$token =~ /^[A-Z]</ and do
-	{
-	    my $width = $token =~ tr/</</;
-	    push @width, $width;
-	    my $node = letter Pod::Tree::Node $token;
-	    push @stack, $node;
-	    next;
-	};
-
-	@width and $token =~ />{$width[-1],}$/ and do
-	{
-	    my $width = pop @width;
-	    my($letter, $interior) = _pop_sequence(\@stack, $width);
-	    my $node = sequence Pod::Tree::Node $letter, $interior;
-	    push @stack, $node;
-	    $token =~ s/^\s*>{$width}//;
-	    my @tokens = split //, $token;
-	    unshift @$tokens, @tokens;
-	    next;
-	};
-
-	my $node = text Pod::Tree::Node $token;
-	push @stack, $node;
-    }
-
-    if (@width)
-    {
-	my @text = map { $_->get_deep_text } @stack;
-	Pod::Tree::Node->_warn("Missing '>' delimiter in\n@text");
-    }
-
-    \@stack
-}
-
-
-sub _pop_sequence
-{
-    my($stack, $width) = @_;
-    my($node, @interior);
-
-    while (@$stack)
-    {
-	$node = pop @$stack;
-	is_letter $node and $node->{width} == $width and 
-	    return ($node, \@interior);
-	unshift @interior, $node;
-    }
-
-    my @text = map { $_->get_deep_text } @interior;
-    $node->_warn("Mismatched sequence delimiters around\n@text");
-
-    $node = letter Pod::Tree::Node  ' ';
-    $node, \@interior;
-}
-
-
-sub parse_links
-{
-    my $node = shift;
-
-    is_link $node and $node->_parse_link;
-
-    my $children = $node->{children};
-    for my $child (@$children)
-    {
-	$child->parse_links;
-    }
-}
-
-
-sub _parse_link
-{
-    my $node = shift;
-
-    $node->{raw_kids} = $node->clone->{children};
-
-    my $children = $node->{children};
-    my($text_kids, $target_kids) = SplitBar($children);
-
-    $node->{ children } = $text_kids;
-    $node->{'target'  } = target Pod::Tree::Node $target_kids;
-}
-
-
-sub SplitBar
-{
-    my $children = shift;
-    my(@text, @link);
-
-    while (@$children)
-    {
-	my $child = shift @$children;
-
-	is_text $child or do 
-	{
-	    push @text, $child;
-	    next;
-	};
-	
-	my($text, $link) = split m(\|), $child->{'text'}, 2;
-	$link and do
-	{
-	    push @text,  text Pod::Tree::Node $text if $text;
-	    push @link, (text Pod::Tree::Node $link), @$children;
-	    return (\@text, \@link)
-	};
-
-	push @text, $child;
-    }
-
-    (\@text, \@text)
-}
-
-
-sub unescape
-{
-    my $node = shift;
-
-    my $children = $node->{children};
-    for my $child (@$children)
-    {
-	$child->unescape;
-    }
-
-    is_sequence $node and $node->_unescape_sequence;
-}
-
-
-sub _unescape_sequence
-{
-    my $node = shift;
-
-    for ($node->{'letter'})
-    {
-	/Z/ and $node->force_text(''), last;
-	/E/ and do 
-	{
-	    my $child = $node->{children}[0];
-	    $child or last;
-	    my $text = $child->_unescape_text;
-	    $text and $node->force_text($text);
-	    last;
-	};
-    }
-}
-
-
-sub _unescape_text
-{
-    my $node = shift;
-    my $text = $node->{'text'};
-
-    defined $text ? Pod::Escapes::e2char($text) : "E<UNDEF?!>";
-}
-
-
-
-sub consolidate
-{
-    my $node = shift;
-    my $old  = $node->{children};
-    $old and @$old or return;
-
-    my $new  = [];
-
-    push @$new, shift @$old;
-
-    while (@$old)
-    {
-	if (is_text     $new->[-1] and is_text     $old->[ 0] or
-	    is_verbatim $new->[-1] and is_verbatim $old->[ 0] or
-	    is_code     $new->[-1] and is_code     $old->[ 0] )
-	{
-	    $new->[-1]{'text'} .= $old->[0]{'text'};
-	    shift @$old;
+	for ( $node->get_type ) {
+		/text/     and return $node->{'text'};
+		/verbatim/ and return $node->{'text'};
 	}
-	else
-	{
-	    push @$new, shift @$old;	    
+
+	join '', map { $_->get_deep_text } @{ $node->{children} };
+}
+
+sub force_text {
+	my ( $node, $text ) = @_;
+	$node->{type} = 'text';
+	$node->{'text'} = $text;
+	undef $node->{children};
+}
+
+sub force_for {
+	my $node = shift;
+	$node->{type} = 'for';
+
+	my ($bracket) = $node->{raw} =~ /^(=\w+\s+\w+\s+)/;
+
+	$node->{brackets} = [$bracket];
+}
+
+sub parse_begin {
+	my ( $node, $nodes ) = @_;
+
+	my $foreign;
+	my @raw;
+	while (@$nodes) {
+		$foreign = shift @$nodes;
+		is_c_end $foreign and last;
+		push @raw, $foreign->{'raw'};
 	}
-    }
+	$node->{'text'} = join '', @raw;
 
-    $node->{children} = $new;
+	my $interpreter = $foreign->{arg};
+	$interpreter
+		and $interpreter ne $node->{arg}
+		and $node->_warn("Mismatched =begin/=end tags around\n$node->{'text'}");
 
-    for my $child (@$new)
-    {
-	$child->consolidate;
-    }
+	$node->{type} = 'for';
+	$node->{brackets} = [ $node->{raw}, $foreign->{raw} ];
 }
 
-
-sub make_lists
-{
-    my $root  = shift;
-    my $nodes = $root->{children};
-
-    $root->_make_lists($nodes);
+sub set_children {
+	my ( $node, $children ) = @_;
+	$node->{children} = $children;
 }
 
-
-sub _make_lists
-{
-    my($node, $old) = @_;
-    my $new = [];
-    my $back;
-
-    while (@$old)
-    {
-	my $child = shift @$old;
-	is_c_over $child and $child->_make_lists($old);
-	is_c_item $child and $child->_make_item ($old);
-	is_c_back $child and $back = $child, last;
-	push @$new, $child;
-    }
-
-    $node->{children} = $new;
-
-    is_root $node and return;
-
-    $node->{type} = 'list';
-    $node->{back} = $back;
-    $node->_set_list_type;
+sub make_sequences {
+	my $node      = shift;
+	my $text      = $node->{'text'};
+	my @tokens    = split /( [A-Z]<<+\s+ | [A-Z]< | \s+>>+ | > )/x, $text;
+	my $sequences = _parse_text( \@tokens );
+	$node->{children} = $sequences;
 }
 
+sub _parse_text {
+	my $tokens = shift;
+	my ( @stack, @width );
 
-sub _set_list_type
-{
-    my $list     = shift;
-    my $children = $list->{children};
+	while (@$tokens) {
+		my $token = shift @$tokens;
+		length $token or next;
 
-    $list->{list_type} = '';  # -w
+		$token =~ /^[A-Z]</ and do {
+			my $width = $token =~ tr/</</;
+			push @width, $width;
+			my $node = letter Pod::Tree::Node $token;
+			push @stack, $node;
+			next;
+		};
 
-    for my $child (@$children)
-    {
-	$child->{type} eq 'item' or next;
-	$list->{list_type} = $child->{item_type};
-	last;
-    }
+		@width and $token =~ />{$width[-1],}$/ and do {
+			my $width = pop @width;
+			my ( $letter, $interior ) = _pop_sequence( \@stack, $width );
+			my $node = sequence Pod::Tree::Node $letter, $interior;
+			push @stack, $node;
+			$token =~ s/^\s*>{$width}//;
+			my @tokens = split //, $token;
+			unshift @$tokens, @tokens;
+			next;
+		};
+
+		my $node = text Pod::Tree::Node $token;
+		push @stack, $node;
+	}
+
+	if (@width) {
+		my @text = map { $_->get_deep_text } @stack;
+		Pod::Tree::Node->_warn("Missing '>' delimiter in\n@text");
+	}
+
+	\@stack;
 }
 
+sub _pop_sequence {
+	my ( $stack, $width ) = @_;
+	my ( $node, @interior );
 
-sub _make_item
-{
-    my($item, $old) = @_;
-    my $siblings = [];
+	while (@$stack) {
+		$node = pop @$stack;
+		is_letter $node
+			and $node->{width} == $width
+			and return ( $node, \@interior );
+		unshift @interior, $node;
+	}
 
-    while (@$old)
-    {
-	my $sibling = $old->[0];
-	is_c_item $sibling and last;
-	is_c_back $sibling and last;
+	my @text = map { $_->get_deep_text } @interior;
+	$node->_warn("Mismatched sequence delimiters around\n@text");
 
-	shift @$old;
-	is_c_over $sibling and do
-	{
-	    $sibling->_make_lists($old);
-	};
-	push @$siblings, $sibling;
-    }
-
-    $item->{type    } = 'item';
-    $item->{siblings} = $siblings;
-    $item->_set_item_type;
+	$node = letter Pod::Tree::Node ' ';
+	$node, \@interior;
 }
 
+sub parse_links {
+	my $node = shift;
 
-sub _set_item_type
-{
-    my $item = shift;
-    my $text = $item->{'text'};
+	is_link $node and $node->_parse_link;
 
-    $text =~ m(^\s* \*  \s*$ )x and $item->{item_type} = 'bullet';
-    $text =~ m(^\s* \d+ \s*$ )x and $item->{item_type} = 'number';
-    $item->{item_type} or $item->{item_type} = 'text';
+	my $children = $node->{children};
+	for my $child (@$children) {
+		$child->parse_links;
+	}
 }
 
-sub clone
-{
-    my $node  = shift;
-    my $clone = { %$node };
+sub _parse_link {
+	my $node = shift;
 
-    my $children = $node->{children};
-    $clone->{children} = [ map { $_->clone } @$children ];
+	$node->{raw_kids} = $node->clone->{children};
 
-    bless $clone, ref $node
+	my $children = $node->{children};
+	my ( $text_kids, $target_kids ) = SplitBar($children);
+
+	$node->{children} = $text_kids;
+	$node->{'target'} = target Pod::Tree::Node $target_kids;
 }
 
+sub SplitBar {
+	my $children = shift;
+	my ( @text, @link );
+
+	while (@$children) {
+		my $child = shift @$children;
+
+		is_text $child or do {
+			push @text, $child;
+			next;
+		};
+
+		my ( $text, $link ) = split m(\|), $child->{'text'}, 2;
+		$link and do {
+			push @text, text Pod::Tree::Node $text if $text;
+			push @link, ( text Pod::Tree::Node $link), @$children;
+			return ( \@text, \@link );
+		};
+
+		push @text, $child;
+	}
+
+	( \@text, \@text );
+}
+
+sub unescape {
+	my $node = shift;
+
+	my $children = $node->{children};
+	for my $child (@$children) {
+		$child->unescape;
+	}
+
+	is_sequence $node and $node->_unescape_sequence;
+}
+
+sub _unescape_sequence {
+	my $node = shift;
+
+	for ( $node->{'letter'} ) {
+		/Z/ and $node->force_text(''), last;
+		/E/ and do {
+			my $child = $node->{children}[0];
+			$child or last;
+			my $text = $child->_unescape_text;
+			$text and $node->force_text($text);
+			last;
+		};
+	}
+}
+
+sub _unescape_text {
+	my $node = shift;
+	my $text = $node->{'text'};
+
+	defined $text ? Pod::Escapes::e2char($text) : "E<UNDEF?!>";
+}
+
+sub consolidate {
+	my $node = shift;
+	my $old  = $node->{children};
+	$old and @$old or return;
+
+	my $new = [];
+
+	push @$new, shift @$old;
+
+	while (@$old) {
+		if (   is_text $new->[-1] and is_text $old->[0]
+			or is_verbatim $new->[-1] and is_verbatim $old->[0]
+			or is_code $new->[-1] and is_code $old->[0] )
+		{
+			$new->[-1]{'text'} .= $old->[0]{'text'};
+			shift @$old;
+		}
+		else {
+			push @$new, shift @$old;
+		}
+	}
+
+	$node->{children} = $new;
+
+	for my $child (@$new) {
+		$child->consolidate;
+	}
+}
+
+sub make_lists {
+	my $root  = shift;
+	my $nodes = $root->{children};
+
+	$root->_make_lists($nodes);
+}
+
+sub _make_lists {
+	my ( $node, $old ) = @_;
+	my $new = [];
+	my $back;
+
+	while (@$old) {
+		my $child = shift @$old;
+		is_c_over $child and $child->_make_lists($old);
+		is_c_item $child and $child->_make_item($old);
+		is_c_back $child and $back = $child, last;
+		push @$new, $child;
+	}
+
+	$node->{children} = $new;
+
+	is_root $node and return;
+
+	$node->{type} = 'list';
+	$node->{back} = $back;
+	$node->_set_list_type;
+}
+
+sub _set_list_type {
+	my $list     = shift;
+	my $children = $list->{children};
+
+	$list->{list_type} = '';    # -w
+
+	for my $child (@$children) {
+		$child->{type} eq 'item' or next;
+		$list->{list_type} = $child->{item_type};
+		last;
+	}
+}
+
+sub _make_item {
+	my ( $item, $old ) = @_;
+	my $siblings = [];
+
+	while (@$old) {
+		my $sibling = $old->[0];
+		is_c_item $sibling and last;
+		is_c_back $sibling and last;
+
+		shift @$old;
+		is_c_over $sibling and do {
+			$sibling->_make_lists($old);
+		};
+		push @$siblings, $sibling;
+	}
+
+	$item->{type}     = 'item';
+	$item->{siblings} = $siblings;
+	$item->_set_item_type;
+}
+
+sub _set_item_type {
+	my $item = shift;
+	my $text = $item->{'text'};
+
+	$text =~ m(^\s* \*  \s*$ )x and $item->{item_type} = 'bullet';
+	$text =~ m(^\s* \d+ \s*$ )x and $item->{item_type} = 'number';
+	$item->{item_type} or $item->{item_type} = 'text';
+}
+
+sub clone {
+	my $node  = shift;
+	my $clone = {%$node};
+
+	my $children = $node->{children};
+	$clone->{children} = [ map { $_->clone } @$children ];
+
+	bless $clone, ref $node;
+}
 
 my $Indent;
 my $String;
 
-sub dump
-{
-    my $node = shift;
+sub dump {
+	my $node = shift;
 
-    $Indent = 0;
-    $String = '';
-    $node->_dump;
-    $String
-}
-
-
-sub _dump
-{
-    my $node = shift;
-    my $type = $node->get_type;
-
-    $String .=  ' ' x $Indent .  uc $type . " ";
-
-    for ($type)
-    {
-	/command/  and $String .= $node->_dump_command;
-	/code/     and $String .= $node->_dump_code;
-	/for/      and $String .= $node->_dump_for;
-	/item/     and $String .= $node->_dump_item;
-	/list/     and $String .= $node->_dump_list;
-	/ordinary/ and $String .= "\n";
-	/root/     and $String .= "\n";
-	/sequence/ and $String .= $node->_dump_sequence;
-	/text/     and $String .= $node->_dump_text;
-	/verbatim/ and $String .= $node->_dump_verbatim;
-    }
-
-    $node->_dump_children;
-    $node->_dump_siblings;
-}
-
-
-sub _dump_command
-{
-    my $node    = shift;
-    my $command = $node->get_command;
-    my $arg     = $node->get_arg;
-
-    "$command $arg\n"
-}
-
-
-sub _dump_code
-{
-    my $node  = shift;
-
-    my $text  = _indent($node->get_text, 3);
-    my $block = "\n{\n$text}\n";
-
-    _indent($block, $Indent)
-}
-
-sub _dump_for
-{
-    my $node = shift;
-    my $arg  = $node->get_arg;
-    my $text = _indent($node->get_text, $Indent+3);
-
-    "$arg\n$text\n"
-}
-
-
-sub _dump_item
-{
-    my $node = shift;
-    uc $node->get_item_type . "\n"
-}
-
-
-sub _dump_list
-{
-    my $node = shift;
-    uc $node->get_list_type . "\n"
-}
-
-
-sub _dump_sequence
-{
-    my $node   = shift;
-    my $letter = $node->get_letter;
-    my $link   = $node->is_link ? $node->_dump_target : '';
-
-    "$letter$link\n";
-}
-
-
-sub _dump_text
-{
-    my $node = shift;
-    my $text = $node->get_text;
-
-    $text =~ s/([\x80-\xff])/sprintf("\\x%02x", ord($1))/eg;
-
-    my $indent = ' ' x ($Indent+5);
-    $text =~ s( (?<=\n) (?=.) )($indent)xg;
-    "$text\n"
-}
-
-
-sub _dump_verbatim
-{
-    my $node = shift;
-    "\n" . $node->get_text . "\n"
-}
-
-
-sub _dump_target
-{
-    my $node    = shift;
-    my $target  = $node->get_target;
-    my $page    = $target->{page};
-    my $section = $target->{section};
-    " $page / $section"
-}
-
-
-sub _dump_children
-{
-    my $node     = shift;
-    my $children = $node->get_children;
-    $children and DumpList($children, '{', '}');
-}
-
-    
-sub _dump_siblings
-{
-    my $node     = shift;
-    my $siblings = $node->get_siblings;
-    $siblings and DumpList($siblings, '[', ']');
-}
-
-    
-sub DumpList
-{
-    my($nodes, $open, $close) = @_;
-
-    $String .= ' ' x $Indent . "$open\n";
-    $Indent += 3;
-
-    for my $node (@$nodes)
-    {
+	$Indent = 0;
+	$String = '';
 	$node->_dump;
-    }
-
-    $Indent -= 3;
-    $String .= ' ' x $Indent . "$close\n";
+	$String;
 }
 
+sub _dump {
+	my $node = shift;
+	my $type = $node->get_type;
 
-sub _indent
-{
-    my($text, $spaces) = @_;
-    my $indent = ' ' x $spaces;
-    $text =~ s( (?<=\n) (?=.) )($indent)xg;
-    $indent . $text
+	$String .= ' ' x $Indent . uc $type . " ";
+
+	for ($type) {
+		/command/  and $String .= $node->_dump_command;
+		/code/     and $String .= $node->_dump_code;
+		/for/      and $String .= $node->_dump_for;
+		/item/     and $String .= $node->_dump_item;
+		/list/     and $String .= $node->_dump_list;
+		/ordinary/ and $String .= "\n";
+		/root/     and $String .= "\n";
+		/sequence/ and $String .= $node->_dump_sequence;
+		/text/     and $String .= $node->_dump_text;
+		/verbatim/ and $String .= $node->_dump_verbatim;
+	}
+
+	$node->_dump_children;
+	$node->_dump_siblings;
 }
 
+sub _dump_command {
+	my $node    = shift;
+	my $command = $node->get_command;
+	my $arg     = $node->get_arg;
 
-sub _warn
-{
-    my($node, $message) = @_;
-
-    my $filename = $node->get_filename;
-    my $tag      = $filename ? "in $filename" : $filename;
-    warn "$message $tag\n";
+	"$command $arg\n";
 }
 
-sub set_filename
-{
-    my($package, $filename) = @_;
-    
-    $Pod::Tree::Node::filename = $filename;
+sub _dump_code {
+	my $node = shift;
+
+	my $text = _indent( $node->get_text, 3 );
+	my $block = "\n{\n$text}\n";
+
+	_indent( $block, $Indent );
 }
 
-sub get_filename
-{
-    $Pod::Tree::Node::filename    
+sub _dump_for {
+	my $node = shift;
+	my $arg  = $node->get_arg;
+	my $text = _indent( $node->get_text, $Indent + 3 );
+
+	"$arg\n$text\n";
 }
 
+sub _dump_item {
+	my $node = shift;
+	uc $node->get_item_type . "\n";
+}
+
+sub _dump_list {
+	my $node = shift;
+	uc $node->get_list_type . "\n";
+}
+
+sub _dump_sequence {
+	my $node   = shift;
+	my $letter = $node->get_letter;
+	my $link   = $node->is_link ? $node->_dump_target : '';
+
+	"$letter$link\n";
+}
+
+sub _dump_text {
+	my $node = shift;
+	my $text = $node->get_text;
+
+	$text =~ s/([\x80-\xff])/sprintf("\\x%02x", ord($1))/eg;
+
+	my $indent = ' ' x ( $Indent + 5 );
+	$text =~ s( (?<=\n) (?=.) )($indent)xg;
+	"$text\n";
+}
+
+sub _dump_verbatim {
+	my $node = shift;
+	"\n" . $node->get_text . "\n";
+}
+
+sub _dump_target {
+	my $node    = shift;
+	my $target  = $node->get_target;
+	my $page    = $target->{page};
+	my $section = $target->{section};
+	" $page / $section";
+}
+
+sub _dump_children {
+	my $node     = shift;
+	my $children = $node->get_children;
+	$children and DumpList( $children, '{', '}' );
+}
+
+sub _dump_siblings {
+	my $node     = shift;
+	my $siblings = $node->get_siblings;
+	$siblings and DumpList( $siblings, '[', ']' );
+}
+
+sub DumpList {
+	my ( $nodes, $open, $close ) = @_;
+
+	$String .= ' ' x $Indent . "$open\n";
+	$Indent += 3;
+
+	for my $node (@$nodes) {
+		$node->_dump;
+	}
+
+	$Indent -= 3;
+	$String .= ' ' x $Indent . "$close\n";
+}
+
+sub _indent {
+	my ( $text, $spaces ) = @_;
+	my $indent = ' ' x $spaces;
+	$text =~ s( (?<=\n) (?=.) )($indent)xg;
+	$indent . $text;
+}
+
+sub _warn {
+	my ( $node, $message ) = @_;
+
+	my $filename = $node->get_filename;
+	my $tag = $filename ? "in $filename" : $filename;
+	warn "$message $tag\n";
+}
+
+sub set_filename {
+	my ( $package, $filename ) = @_;
+
+	$Pod::Tree::Node::filename = $filename;
+}
+
+sub get_filename {
+	$Pod::Tree::Node::filename;
+}
 
 1
 

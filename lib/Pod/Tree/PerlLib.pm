@@ -11,219 +11,203 @@ use base qw(Pod::Tree::PerlUtil);
 
 use constant COLUMN_WIDTH => 30;
 
+sub new {
+	my %defaults = (
+		col_width => COLUMN_WIDTH,
+		bgcolor   => '#ffffff',
+		text      => '#000000'
+	);
+	my ( $class, $perl_dir, $html_dir, $link_map, %options ) = @_;
+	my $options = { %defaults, %options, link_map => $link_map };
 
-sub new
-{
-    my %defaults = (col_width => COLUMN_WIDTH,
-		    bgcolor   => '#ffffff',
-		    text      => '#000000');
-    my($class, $perl_dir, $html_dir, $link_map, %options) = @_;
-    my $options  = { %defaults, %options, link_map => $link_map };
+	my %stop_files = map { $_ => 1 } qw(perllocal.pod);
 
-    my %stop_files = map { $_ => 1 } qw(perllocal.pod);
-
-    my $perl_lib = { perl_dir  =>  $perl_dir,
-		     html_dir  =>  $html_dir,
-		     lib_dir   =>  'lib',
-		     top_page  =>  'lib.html',
-		     stop_files => \%stop_files,
-		     options   =>  $options };
-
-    bless $perl_lib, $class
-}
-
-
-sub scan
-{
-    my($perl_lib, @dirs) = @_;
-    $perl_lib->report1("scan");
-
-    # Don't try to install PODs for modules on relative paths in @INC
-    # (Typically `.')
-    @dirs = grep { m(^/) } @dirs;
-
-    $perl_lib->_stop_dirs(@dirs);
-
-    for my $dir (@dirs)
-    {
-	$perl_lib->{find_dir} = $dir;
-        File::Find::find({wanted   => sub {$perl_lib->_scan}, # Closures rock!
-			  no_chdir => 1 },
-			 $dir); 
-    }
-}
-
-
-sub _stop_dirs
-{
-    my($perl_lib, @dirs) = @_;
-
-    for my $dir (@dirs)
-    {
-	for my $stop_dir (@dirs)
-	{
-	    $stop_dir =~ /^$dir./ and 
-		$perl_lib->{stop_dir}{$dir}{$stop_dir} = 1;
-	}
-    }
-}
-
-
-sub _scan
-{
-    my $perl_lib = shift;
-    my $source   = $File::Find::name;
-
-    -d $source and $perl_lib->_scan_dir ($source);
-    -f $source and $perl_lib->_scan_file($source);
-}
-
-
-sub _scan_dir
-{
-    my($perl_lib, $dir) = @_;
-
-    my $find_dir = $perl_lib->{find_dir};
-
-    if ($perl_lib->{stop_dir}{$find_dir}{$dir} or $dir =~ /pod$/)
-    {
-	$File::Find::prune = 1;
-	return;
-    }
-
-    my $html_dir = $perl_lib->{html_dir};
-    my $lib_dir  = $perl_lib->{lib_dir};
-       $dir      =~ s(^$find_dir)($html_dir/$lib_dir);
-
-    $perl_lib->mkdir($dir);
-}
-
-
-sub _scan_file
-{
-    my($perl_lib, $source) = @_;
-
-       $source   =~ m(\. (?: pl | pm | pod ) $ )x or  return;
-    my $file     = (split m(/), $source)[-1];
-       $perl_lib->{stop_files}{$file}             and return;
-    my $module   = $source;
-    my $find_dir = $perl_lib->{find_dir};
-       $module   =~ s(^$find_dir/)();
-       $module   =~ s( \.\w+$    )()x;    # Foo/Bar
-
-    my $html_dir = $perl_lib->{html_dir};
-    my $lib_dir  = $perl_lib->{lib_dir};
-    my $dest     = "$html_dir/$lib_dir/$module.html"; 
-    my($name, $description) = $perl_lib->get_name($source);
-
-       $name or return;
-       $perl_lib->report2($name);
-
-    my $href = "$module.html";
-    my $link = "$lib_dir/$module";
-
-    my $entry = { source      => $source,       # .../Foo/Bar.pm
-		  dest        => $dest,         # .../html/lib/Foo/Bar.html
-		  href        => $href,         # Foo/Bar.html
-		  description => $description };
-
-    $perl_lib->{index}{$name} = $entry;
-    $perl_lib->{options}{link_map}->add_page($name, $link);
-}
-
-
-sub index
-{
-    my $perl_lib = shift;
-       $perl_lib->report1("index");
-    my $html_dir = $perl_lib->{html_dir};
-    my $top_page = $perl_lib->{top_page};
-    my $dest     = "$html_dir/$top_page";
-
-    my $fh       = new IO::File ">$dest";
-    defined $fh or die "Pod::Tree::PerlLib::index: Can't open $dest: $!\n";
-    my $stream   = new HTML::Stream $fh;
-
-    my $options  = $perl_lib->{options};
-    my $bgcolor  = $options->{bgcolor};
-    my $text 	 = $options->{text};
-    my $title    = "Perl Modules";
-
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
-
-    $perl_lib->_emit_entries($stream);
-
-    $stream->_BODY->_HTML;
-}
-
-
-sub get_top_entry
-{
-    my $perl_lib = shift;
-
-    +{ URL         => $perl_lib->{top_page},
-       description => 'Modules' }
-}
-
-
-sub _emit_entries
-{
-    my($perl_lib, $stream) = @_;
-
-    my $lib_dir   = $perl_lib->{lib_dir};
-    my $index     = $perl_lib->{index};
-    my $options   = $perl_lib->{options};
-    my $col_width = $options->{col_width};
-
-    $stream->PRE;
-
-    for my $name (sort keys %$index)
-    {
-	my $entry = $index->{$name};
-	my $href  = $entry->{href};
-	my $desc  = $entry->{description};
-	my $pad   = $col_width - length $name;
-
-	$stream->A(HREF => "$lib_dir/$href")->t($name)->_A;
-
-	$pad < 1 and do
-	{
-	    $stream->nl;
-	    $pad = $col_width;
+	my $perl_lib = {
+		perl_dir   => $perl_dir,
+		html_dir   => $html_dir,
+		lib_dir    => 'lib',
+		top_page   => 'lib.html',
+		stop_files => \%stop_files,
+		options    => $options
 	};
 
-	$stream->t(' ' x $pad, $desc)->nl;
-    }
-
-    $stream->_PRE;
+	bless $perl_lib, $class;
 }
 
+sub scan {
+	my ( $perl_lib, @dirs ) = @_;
+	$perl_lib->report1("scan");
 
-sub translate
-{
-    my $perl_lib = shift;
-       $perl_lib->report1("translate");
+	# Don't try to install PODs for modules on relative paths in @INC
+	# (Typically `.')
+	@dirs = grep {m(^/)} @dirs;
 
-    my $index    = $perl_lib->{index};
-    my $options  = $perl_lib->{options};
+	$perl_lib->_stop_dirs(@dirs);
 
-    for my $name (sort keys %$index)
-    {
-	   $perl_lib->report2($name);
-	my @path   = split m(::), $name;
-	my $depth  = @path; # no -1 because they are all under /lib/
-	   $options->{link_map}->set_depth($depth);
-	
-	my $entry  = $index->{$name};
-	my $source = $entry->{source};
-	my $dest   = $entry->{dest};
-	my $html   = new Pod::Tree::HTML $source, $dest, %$options;
-	   $html->translate;
-    }
+	for my $dir (@dirs) {
+		$perl_lib->{find_dir} = $dir;
+		File::Find::find(
+			{
+				wanted => sub { $perl_lib->_scan },    # Closures rock!
+				no_chdir => 1
+			},
+			$dir
+		);
+	}
+}
+
+sub _stop_dirs {
+	my ( $perl_lib, @dirs ) = @_;
+
+	for my $dir (@dirs) {
+		for my $stop_dir (@dirs) {
+			$stop_dir =~ /^$dir./
+				and $perl_lib->{stop_dir}{$dir}{$stop_dir} = 1;
+		}
+	}
+}
+
+sub _scan {
+	my $perl_lib = shift;
+	my $source   = $File::Find::name;
+
+	-d $source and $perl_lib->_scan_dir($source);
+	-f $source and $perl_lib->_scan_file($source);
+}
+
+sub _scan_dir {
+	my ( $perl_lib, $dir ) = @_;
+
+	my $find_dir = $perl_lib->{find_dir};
+
+	if ( $perl_lib->{stop_dir}{$find_dir}{$dir} or $dir =~ /pod$/ ) {
+		$File::Find::prune = 1;
+		return;
+	}
+
+	my $html_dir = $perl_lib->{html_dir};
+	my $lib_dir  = $perl_lib->{lib_dir};
+	$dir =~ s(^$find_dir)($html_dir/$lib_dir);
+
+	$perl_lib->mkdir($dir);
+}
+
+sub _scan_file {
+	my ( $perl_lib, $source ) = @_;
+
+	$source =~ m(\. (?: pl | pm | pod ) $ )x or return;
+	my $file = ( split m(/), $source )[-1];
+	$perl_lib->{stop_files}{$file} and return;
+	my $module   = $source;
+	my $find_dir = $perl_lib->{find_dir};
+	$module =~ s(^$find_dir/)();
+	$module =~ s( \.\w+$    )()x;    # Foo/Bar
+
+	my $html_dir = $perl_lib->{html_dir};
+	my $lib_dir  = $perl_lib->{lib_dir};
+	my $dest     = "$html_dir/$lib_dir/$module.html";
+	my ( $name, $description ) = $perl_lib->get_name($source);
+
+	$name or return;
+	$perl_lib->report2($name);
+
+	my $href = "$module.html";
+	my $link = "$lib_dir/$module";
+
+	my $entry = {
+		source      => $source,       # .../Foo/Bar.pm
+		dest        => $dest,         # .../html/lib/Foo/Bar.html
+		href        => $href,         # Foo/Bar.html
+		description => $description
+	};
+
+	$perl_lib->{index}{$name} = $entry;
+	$perl_lib->{options}{link_map}->add_page( $name, $link );
+}
+
+sub index {
+	my $perl_lib = shift;
+	$perl_lib->report1("index");
+	my $html_dir = $perl_lib->{html_dir};
+	my $top_page = $perl_lib->{top_page};
+	my $dest     = "$html_dir/$top_page";
+
+	my $fh = new IO::File ">$dest";
+	defined $fh or die "Pod::Tree::PerlLib::index: Can't open $dest: $!\n";
+	my $stream = new HTML::Stream $fh;
+
+	my $options = $perl_lib->{options};
+	my $bgcolor = $options->{bgcolor};
+	my $text    = $options->{text};
+	my $title   = "Perl Modules";
+
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
+
+	$perl_lib->_emit_entries($stream);
+
+	$stream->_BODY->_HTML;
+}
+
+sub get_top_entry {
+	my $perl_lib = shift;
+
+	+{
+		URL         => $perl_lib->{top_page},
+		description => 'Modules'
+	};
+}
+
+sub _emit_entries {
+	my ( $perl_lib, $stream ) = @_;
+
+	my $lib_dir   = $perl_lib->{lib_dir};
+	my $index     = $perl_lib->{index};
+	my $options   = $perl_lib->{options};
+	my $col_width = $options->{col_width};
+
+	$stream->PRE;
+
+	for my $name ( sort keys %$index ) {
+		my $entry = $index->{$name};
+		my $href  = $entry->{href};
+		my $desc  = $entry->{description};
+		my $pad   = $col_width - length $name;
+
+		$stream->A( HREF => "$lib_dir/$href" )->t($name)->_A;
+
+		$pad < 1 and do {
+			$stream->nl;
+			$pad = $col_width;
+		};
+
+		$stream->t( ' ' x $pad, $desc )->nl;
+	}
+
+	$stream->_PRE;
+}
+
+sub translate {
+	my $perl_lib = shift;
+	$perl_lib->report1("translate");
+
+	my $index   = $perl_lib->{index};
+	my $options = $perl_lib->{options};
+
+	for my $name ( sort keys %$index ) {
+		$perl_lib->report2($name);
+		my @path = split m(::), $name;
+		my $depth = @path;    # no -1 because they are all under /lib/
+		$options->{link_map}->set_depth($depth);
+
+		my $entry  = $index->{$name};
+		my $source = $entry->{source};
+		my $dest   = $entry->{dest};
+		my $html   = new Pod::Tree::HTML $source, $dest, %$options;
+		$html->translate;
+	}
 }
 
 1

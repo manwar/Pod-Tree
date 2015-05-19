@@ -10,194 +10,183 @@ package Pod::Tree::PerlPod;
 
 use base qw(Pod::Tree::PerlUtil);
 
+sub new {
+	my %defaults = (
+		col_width => 20,
+		bgcolor   => '#ffffff',
+		text      => '#000000'
+	);
 
-sub new
-{
-    my %defaults = (col_width => 20,
-		    bgcolor   => '#ffffff',
-		    text      => '#000000');
+	my ( $class, $perl_dir, $html_dir, $link_map, %options ) = @_;
+	my $options = { %defaults, %options, link_map => $link_map };
 
-    my($class, $perl_dir, $html_dir, $link_map, %options) = @_;
-    my $options = { %defaults, %options, link_map => $link_map };
+	my %special = map { $_ => 1 } qw(pod/perl pod/perlfunc);
 
-    my %special = map { $_ => 1 } qw(pod/perl pod/perlfunc);
-
-    my $perl_pod = { perl_dir =>  $perl_dir,
-		     html_dir =>  $html_dir,
-		     top_page =>  'pod.html',
-		     special  => \%special,
-		     options  =>  $options };
-
-    bless $perl_pod, $class
-}
-
-
-sub scan
-{
-    my $perl_pod = shift;
-       $perl_pod->report1("scan");
-    my $perl_dir = $perl_pod->{perl_dir};
-
-    File::Find::find({ wanted   => sub {$perl_pod->_scan}, # Perl rocks!
-		       no_chdir => 1 },
-		     $perl_dir); 
-}
-
-
-sub _scan
-{
-    my $perl_pod = shift;
-    my $source   = $File::Find::name;
-    my $dest     = $source;
-    my $perl_dir = $perl_pod->{perl_dir};
-    my $html_dir = $perl_pod->{html_dir};
-       $dest     =~ s(^$perl_dir)($html_dir);
-
-    -d $source and $perl_pod->_scan_dir (         $dest);
-    -f $source and $perl_pod->_scan_file($source, $dest);
-}
-
-
-sub _scan_dir
-{
-    my($perl_pod, $dir) = @_;
-
-    $dir =~ m(/ext$) and do  # extensions are handled by Pod::Tree::PerlLib
-    {
-	$File::Find::prune = 1;
-	return;
-    };
-
-    -d $dir or mkdir $dir, 0755 or 
-	die "Pod::Tree::PerlPod::_scan_dir: Can't mkdir $dir: $!\n";
-}
-
-
-sub _scan_file
-{
-    my($perl_pod, $source, $dest) = @_;
-
-    $source =~ m( (\w+)\.pod$ )x or return;
-
-    my $link     = $source;
-    my $perl_dir = $perl_pod->{perl_dir};
-    $link =~ s(^$perl_dir/)();
-    $link =~ s( \.pod$ )()x;
-    $perl_pod->report2($link);
-
-    my $name = (split m(/), $link)[-1];
-    my $desc = $perl_pod->get_description($source);
-
-    $dest   =~ s( \.\w+$ )(.html)x;
-
-    my $pod = { name   => $name,   # perldata
-		desc   => $desc,   # Perl data types
-		link   => $link,   # pod/perldata
-		source => $source, # .../perl5.5.650/pod/perldata.pod
-		dest   => $dest }; # .../public_html/perl/pod/perldata.html
-
-    $perl_pod->{pods}{$link} = $pod;
-    $perl_pod->{options}{link_map}->add_page($name, $link);
-}
-
-
-sub index
-{
-    my $perl_pod = shift;
-       $perl_pod->report1("index");
-    my $html_dir = $perl_pod->{html_dir};
-    my $top_page = $perl_pod->{top_page};
-    my $dest     = "$html_dir/$top_page";
-
-    my $fh       = new IO::File ">$dest";
-    defined $fh or die "Pod::Tree::PerlPod::index: Can't open $dest: $!\n";
-    my $stream   = new HTML::Stream $fh;
-
-    my $options  = $perl_pod->{options};
-    my $bgcolor  = $options->{bgcolor};
-    my $text 	 = $options->{text};
-    my $title    = "Perl PODs";
-
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
-
-    $perl_pod->_emit_entries($stream);
-
-    $stream->_BODY->_HTML;    
-}
-
-
-sub get_top_entry
-{
-    my $perl_dist = shift;
-
-    +{ URL         => $perl_dist->{top_page},
-       description => 'PODs' }
-}
-
-
-sub _emit_entries
-{
-    my($perl_pod, $stream) = @_;
-    my $pods      = $perl_pod->{pods};
-    my $options   = $perl_pod->{options};
-    my $col_width = $options ->{col_width};
-
-    $stream->PRE;
-
-    my $pods = $perl_pod->{pods};
-    for my $link (sort keys %$pods)
-    {
-	my $pad = $col_width - length $link;
-	$stream->A(HREF => "$link.html")->t($link)->_A;
-
-	$pad < 1 and do
-	{
-	    $stream->nl;
-	    $pad = $col_width;
+	my $perl_pod = {
+		perl_dir => $perl_dir,
+		html_dir => $html_dir,
+		top_page => 'pod.html',
+		special  => \%special,
+		options  => $options
 	};
 
-	$stream->t(' ' x $pad, $pods->{$link}{desc})->nl;
-    }
-
-    $stream->_PRE;
+	bless $perl_pod, $class;
 }
 
+sub scan {
+	my $perl_pod = shift;
+	$perl_pod->report1("scan");
+	my $perl_dir = $perl_pod->{perl_dir};
 
-sub translate
-{
-    my $perl_pod = shift;
-       $perl_pod->report1("translate");
-    my $pods     = $perl_pod->{pods};
-    my $special  = $perl_pod->{special};
+	File::Find::find(
+		{
+			wanted => sub { $perl_pod->_scan },    # Perl rocks!
+			no_chdir => 1
+		},
+		$perl_dir
+	);
+}
 
-    for my $link (sort keys %$pods)
-    {
-	$special->{$link} and next;
+sub _scan {
+	my $perl_pod = shift;
+	my $source   = $File::Find::name;
+	my $dest     = $source;
+	my $perl_dir = $perl_pod->{perl_dir};
+	my $html_dir = $perl_pod->{html_dir};
+	$dest =~ s(^$perl_dir)($html_dir);
+
+	-d $source and $perl_pod->_scan_dir($dest);
+	-f $source and $perl_pod->_scan_file( $source, $dest );
+}
+
+sub _scan_dir {
+	my ( $perl_pod, $dir ) = @_;
+
+	$dir =~ m(/ext$) and do    # extensions are handled by Pod::Tree::PerlLib
+	{
+		$File::Find::prune = 1;
+		return;
+	};
+
+	-d $dir
+		or mkdir $dir, 0755
+		or die "Pod::Tree::PerlPod::_scan_dir: Can't mkdir $dir: $!\n";
+}
+
+sub _scan_file {
+	my ( $perl_pod, $source, $dest ) = @_;
+
+	$source =~ m( (\w+)\.pod$ )x or return;
+
+	my $link     = $source;
+	my $perl_dir = $perl_pod->{perl_dir};
+	$link =~ s(^$perl_dir/)();
+	$link =~ s( \.pod$ )()x;
 	$perl_pod->report2($link);
-	$perl_pod->_translate($link);
-    }
+
+	my $name = ( split m(/), $link )[-1];
+	my $desc = $perl_pod->get_description($source);
+
+	$dest =~ s( \.\w+$ )(.html)x;
+
+	my $pod = {
+		name   => $name,      # perldata
+		desc   => $desc,      # Perl data types
+		link   => $link,      # pod/perldata
+		source => $source,    # .../perl5.5.650/pod/perldata.pod
+		dest   => $dest
+	};    # .../public_html/perl/pod/perldata.html
+
+	$perl_pod->{pods}{$link} = $pod;
+	$perl_pod->{options}{link_map}->add_page( $name, $link );
 }
 
+sub index {
+	my $perl_pod = shift;
+	$perl_pod->report1("index");
+	my $html_dir = $perl_pod->{html_dir};
+	my $top_page = $perl_pod->{top_page};
+	my $dest     = "$html_dir/$top_page";
 
-sub _translate
-{
-    my($perl_pod, $link) = @_;
+	my $fh = new IO::File ">$dest";
+	defined $fh or die "Pod::Tree::PerlPod::index: Can't open $dest: $!\n";
+	my $stream = new HTML::Stream $fh;
 
-    my $pod      = $perl_pod->{pods}{$link};
-    my $source   = $pod->{source};
-    my $dest     = $pod->{dest};
-    my $options  = $perl_pod->{options};
+	my $options = $perl_pod->{options};
+	my $bgcolor = $options->{bgcolor};
+	my $text    = $options->{text};
+	my $title   = "Perl PODs";
 
-    my @path     = split m(\/), $link;
-    my $depth    = @path - 1;
-    $options->{link_map}->set_depth($depth);
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
 
-    my $html = new Pod::Tree::HTML $source, $dest, %$options;
-    $html->translate;
+	$perl_pod->_emit_entries($stream);
+
+	$stream->_BODY->_HTML;
+}
+
+sub get_top_entry {
+	my $perl_dist = shift;
+
+	+{
+		URL         => $perl_dist->{top_page},
+		description => 'PODs'
+	};
+}
+
+sub _emit_entries {
+	my ( $perl_pod, $stream ) = @_;
+	my $pods      = $perl_pod->{pods};
+	my $options   = $perl_pod->{options};
+	my $col_width = $options->{col_width};
+
+	$stream->PRE;
+
+	my $pods = $perl_pod->{pods};
+	for my $link ( sort keys %$pods ) {
+		my $pad = $col_width - length $link;
+		$stream->A( HREF => "$link.html" )->t($link)->_A;
+
+		$pad < 1 and do {
+			$stream->nl;
+			$pad = $col_width;
+		};
+
+		$stream->t( ' ' x $pad, $pods->{$link}{desc} )->nl;
+	}
+
+	$stream->_PRE;
+}
+
+sub translate {
+	my $perl_pod = shift;
+	$perl_pod->report1("translate");
+	my $pods    = $perl_pod->{pods};
+	my $special = $perl_pod->{special};
+
+	for my $link ( sort keys %$pods ) {
+		$special->{$link} and next;
+		$perl_pod->report2($link);
+		$perl_pod->_translate($link);
+	}
+}
+
+sub _translate {
+	my ( $perl_pod, $link ) = @_;
+
+	my $pod     = $perl_pod->{pods}{$link};
+	my $source  = $pod->{source};
+	my $dest    = $pod->{dest};
+	my $options = $perl_pod->{options};
+
+	my @path = split m(\/), $link;
+	my $depth = @path - 1;
+	$options->{link_map}->set_depth($depth);
+
+	my $html = new Pod::Tree::HTML $source, $dest, %$options;
+	$html->translate;
 }
 
 1

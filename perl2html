@@ -12,59 +12,53 @@ use Pod::Tree::PerlMap;
 use Pod::Tree::PerlPod;
 use Pod::Tree::PerlTop;
 
-
 my %Opts;
 $Opts{toc} = 1;
-my $ok = GetOptions(\%Opts, 
-		    "v:i",
-		    "toc!", "hr:i", 
-		    "bgcolor:s", "text:s");
+my $ok = GetOptions( \%Opts, "v:i", "toc!", "hr:i", "bgcolor:s", "text:s" );
 
 $ok or die "Bad command line options\n";
 
-my($Perl_Dir, $HTML_Dir) = @ARGV;
+my ( $Perl_Dir, $HTML_Dir ) = @ARGV;
 $HTML_Dir or die "perl2html Perl_Dir HTML_Dir\n";
 
 $Perl_Dir =~ s( /$ )()x;
 $HTML_Dir =~ s( /$ )()x;
 
-$| = 1;	      
+$| = 1;
 umask 0022;
 -d $HTML_Dir or mkdir $HTML_Dir, 0777 or die "Can't mkdir $HTML_Dir: $!\n";
 
+my ($Perl_Map);
+my ( $Perl_Bin, $Perl_Dist, $Perl_Func, $Perl_Lib, $Perl_Pod, $Perl_Top );
 
-my($Perl_Map);
-my($Perl_Bin, $Perl_Dist, $Perl_Func, $Perl_Lib, $Perl_Pod, $Perl_Top);
+$Perl_Map = new Pod::Tree::PerlMap;
 
-$Perl_Map  = new Pod::Tree::PerlMap;
-
-$Perl_Bin  = new Pod::Tree::PerlBin  $Perl_Dir, $HTML_Dir, $Perl_Map, %Opts;
+$Perl_Bin  = new Pod::Tree::PerlBin $Perl_Dir,  $HTML_Dir, $Perl_Map, %Opts;
 $Perl_Dist = new Pod::Tree::PerlDist $Perl_Dir, $HTML_Dir, $Perl_Map, %Opts;
 $Perl_Func = new Pod::Tree::PerlFunc $Perl_Dir, $HTML_Dir, $Perl_Map, %Opts;
-$Perl_Lib  = new Pod::Tree::PerlLib  $Perl_Dir, $HTML_Dir, $Perl_Map, %Opts;
-$Perl_Pod  = new Pod::Tree::PerlPod  $Perl_Dir, $HTML_Dir, $Perl_Map, %Opts;
-$Perl_Top  = new Pod::Tree::PerlTop  $Perl_Dir, $HTML_Dir, $Perl_Map, %Opts;
+$Perl_Lib  = new Pod::Tree::PerlLib $Perl_Dir,  $HTML_Dir, $Perl_Map, %Opts;
+$Perl_Pod  = new Pod::Tree::PerlPod $Perl_Dir,  $HTML_Dir, $Perl_Map, %Opts;
+$Perl_Top  = new Pod::Tree::PerlTop $Perl_Dir,  $HTML_Dir, $Perl_Map, %Opts;
 
-$Perl_Pod ->scan;
-$Perl_Bin ->scan(split /$Config{path_sep}/, $ENV{PATH});
+$Perl_Pod->scan;
+$Perl_Bin->scan( split /$Config{path_sep}/, $ENV{PATH} );
 $Perl_Dist->scan;
 $Perl_Func->scan;
-$Perl_Lib ->scan(@INC);
+$Perl_Lib->scan(@INC);
 
-$Perl_Bin ->index;
+$Perl_Bin->index;
 $Perl_Dist->index;
 $Perl_Func->index;
-$Perl_Lib ->index;
-$Perl_Pod ->index;
-$Perl_Top ->index($Perl_Top, $Perl_Pod, $Perl_Lib, $Perl_Bin, $Perl_Dist);
+$Perl_Lib->index;
+$Perl_Pod->index;
+$Perl_Top->index( $Perl_Top, $Perl_Pod, $Perl_Lib, $Perl_Bin, $Perl_Dist );
 
-$Perl_Bin ->translate;
+$Perl_Bin->translate;
 $Perl_Dist->translate;
 $Perl_Func->translate;
-$Perl_Lib ->translate;
-$Perl_Pod ->translate;
-$Perl_Top ->translate;
-
+$Perl_Lib->translate;
+$Perl_Pod->translate;
+$Perl_Top->translate;
 
 __END__
 

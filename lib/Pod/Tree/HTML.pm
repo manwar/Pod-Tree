@@ -9,44 +9,36 @@ use IO::String;
 use Pod::Tree;
 use Text::Template;
 
-
 package Pod::Tree::BitBucket;
 
-sub new      { bless {}, shift }
-sub AUTOLOAD { shift }
-
+sub new { bless {}, shift }
+sub AUTOLOAD {shift}
 
 package Pod::Tree::StrStream;
 
-sub new
-{
-    my($class, $ref) = @_;
+sub new {
+	my ( $class, $ref ) = @_;
 
-    if ($ref)
-    {
-	return bless $ref, $class
-    }
-    else
-    {
-	my $st = '';
-	return bless \$st, $class;
-    }
+	if ($ref) {
+		return bless $ref, $class;
+	}
+	else {
+		my $st = '';
+		return bless \$st, $class;
+	}
 }
 
-sub print
-{
-    my $st = shift;
-    $$st  .= join('', @_);
+sub print {
+	my $st = shift;
+	$$st .= join( '', @_ );
 }
 
-sub get
-{
-    my $st = shift;
-    my $s  = $$st;
-    $$st   = '';
-    $s
+sub get {
+	my $st = shift;
+	my $s  = $$st;
+	$$st = '';
+	$s;
 }
-
 
 package Pod::Tree::HTML;
 
@@ -55,688 +47,604 @@ use constant TEXT    => '#000000';
 
 our $VERSION = '1.10';
 
-sub new
-{
-    my($class, $source, $dest, %options) = @_;
-    defined $dest or die "Pod::Tree::HTML::new: not enough arguments\n";
+sub new {
+	my ( $class, $source, $dest, %options ) = @_;
+	defined $dest or die "Pod::Tree::HTML::new: not enough arguments\n";
 
-    my $tree         = _resolve_source($source);
-    my($fh, $stream) = _resolve_dest  ($dest  , $tree, \%options);
+	my $tree = _resolve_source($source);
+	my ( $fh, $stream ) = _resolve_dest( $dest, $tree, \%options );
 
-    my $options = { bgcolor     => BGCOLOR,
-		    depth       => 0,
-		    hr          => 1,
-		    link_map    => Pod::Tree::HTML::LinkMap->new(),
-		    text        => TEXT,
-		    toc         => 1,
-		    };
+	my $options = {
+		bgcolor  => BGCOLOR,
+		depth    => 0,
+		hr       => 1,
+		link_map => Pod::Tree::HTML::LinkMap->new(),
+		text     => TEXT,
+		toc      => 1,
+	};
 
-    my $HTML = { tree        => $tree,
-		 root        => $tree->get_root,
-		 stream      => $stream,
-		 fh          => $fh,
-		 text_method => 'text',
-		 options     => $options,
-		 };
+	my $HTML = {
+		tree        => $tree,
+		root        => $tree->get_root,
+		stream      => $stream,
+		fh          => $fh,
+		text_method => 'text',
+		options     => $options,
+	};
 
-    bless $HTML, $class;
+	bless $HTML, $class;
 
-    $HTML->set_options(%options);
-    $HTML
+	$HTML->set_options(%options);
+	$HTML;
 }
 
+sub _resolve_source {
+	my $source = shift;
+	my $ref    = ref $source;
+	local *isa = \&UNIVERSAL::isa;
 
-sub _resolve_source
-{
-    my $source = shift;
-    my $ref    = ref $source;
-    local *isa = \&UNIVERSAL::isa;
+	isa( $source, 'Pod::Tree' ) and return $source;
 
-    isa($source, 'Pod::Tree') and return $source;
+	my $tree = new Pod::Tree;
+	not $ref and $tree->load_file($source);
+	isa( $source, 'IO::File' ) and $tree->load_fh($source);
+	$ref eq 'SCALAR' and $tree->load_string($$source);
+	$ref eq 'ARRAY'  and $tree->load_paragraphs($source);
 
-    my $tree = new Pod::Tree;
-    not $ref		     and $tree->load_file      ( $source);
-    isa($source, 'IO::File') and $tree->load_fh	       ( $source);
-    $ref eq 'SCALAR'         and $tree->load_string    ($$source);
-    $ref eq 'ARRAY'          and $tree->load_paragraphs( $source);
+	$tree->loaded
+		or die "Pod::Tree::HTML::_resolve_source: Can't load POD from $source\n";
 
-    $tree->loaded or 
-	die "Pod::Tree::HTML::_resolve_source: Can't load POD from $source\n";
-
-    $tree
+	$tree;
 }
 
+sub _resolve_dest {
+	my ( $dest, $tree, $options ) = @_;
 
-sub _resolve_dest
-{
-    my($dest, $tree, $options) = @_;
+	$tree->has_pod
+		or $options->{empty}
+		or return ( undef, new Pod::Tree::BitBucket );
 
-    $tree->has_pod or $options->{empty} or
-	return (undef, new Pod::Tree::BitBucket);
+	local *isa = \&UNIVERSAL::isa;
+	local *can = \&UNIVERSAL::can;
 
-    local *isa = \&UNIVERSAL::isa;
-    local *can = \&UNIVERSAL::can;
+	isa( $dest, 'HTML::Stream' ) and return ( undef, $dest );
+	isa( $dest, 'IO::File' )     and return ( $dest, new HTML::Stream $dest);
+	can( $dest, 'print' ) and return ( $dest, new HTML::Stream $dest);
 
-    isa($dest, 'HTML::Stream') and return (undef, 		   $dest);
-    isa($dest, 'IO::File'    ) and return ($dest, new HTML::Stream $dest);
-    can($dest, 'print'       ) and return ($dest, new HTML::Stream $dest);
+	if ( ref $dest eq 'SCALAR' ) {
+		my $fh = new IO::String $$dest;
+		return ( $fh, new HTML::Stream $fh);
+	}
 
-    if (ref $dest eq 'SCALAR')
-    {
-	my $fh = new IO::String $$dest;
-	return ($fh, new HTML::Stream $fh);
-    }
+	if ( ref $dest eq '' and $dest ) {
+		my $fh = new IO::File;
+		$fh->open( $dest, '>' ) or die "Pod::Tree::HTML::new: Can't open $dest: $!\n";
+		return ( $fh, new HTML::Stream $fh);
+	}
 
-    if (ref $dest eq '' and $dest)
-    {
-	my $fh = new IO::File;
-	$fh->open($dest, '>') or die "Pod::Tree::HTML::new: Can't open $dest: $!\n";
-	return ($fh, new HTML::Stream $fh);
-    }
-
-    die "Pod::Tree::HTML::_resolve_dest: Can't write HTML to $dest\n";
+	die "Pod::Tree::HTML::_resolve_dest: Can't write HTML to $dest\n";
 }
 
+sub set_options {
+	my ( $html, %options ) = @_;
 
-sub set_options
-{
-    my($html, %options) = @_;
-
-    my($key, $value);
-    while (($key, $value) = each %options)
-    {
-	$html->{options}{$key} = $value;
-    }
+	my ( $key, $value );
+	while ( ( $key, $value ) = each %options ) {
+		$html->{options}{$key} = $value;
+	}
 }
 
+sub get_options {
+	my ( $html, @options ) = @_;
 
-sub get_options
-{
-    my($html, @options) = @_;
-
-    map { $html->{options}{$_} } @options
+	map { $html->{options}{$_} } @options;
 }
-
 
 sub get_stream { shift->{stream} }
 
+sub translate {
+	my ( $html, $template ) = @_;
 
-sub translate
-{
-    my($html, $template) = @_;
-
-    if ($template)
-    {
-	$html->_template($template);
-    }
-    else
-    {
-	$html->_translate;
-    }
-}
-
-
-sub _translate
-{
-    my $html    = shift;
-    my $stream  = $html->{stream};
-    my $bgcolor = $html->{options}{bgcolor};
-    my $text 	= $html->{options}{text};
-    my $title   = $html->_make_title;
-    my $base    = $html->{options}{base};
-    my $css     = $html->{options}{css};
-
-    $stream->HTML->HEAD;
-
-    defined $title and $stream->TITLE->text($title)->_TITLE;
-    defined $base  and $stream->BASE(href => $base);
-    defined $css   and $stream->LINK(href => $css,
-				     type => "text/css",
-				     rel  => "stylesheet");
-
-    $stream->_HEAD
-	   ->BODY(BGCOLOR => $bgcolor, TEXT => $text);
-
-    $html->emit_toc;
-    $html->emit_body;
-
-    $stream->nl
-	   ->_BODY
-	   ->_HTML
-}
-
-
-sub _template
-{
-    my ($html, $tSource) = @_;
-
-    my 	$fh	    = $html->{fh};
-    my  $sStream    = new Pod::Tree::StrStream;
-    $html->{stream} = new HTML::Stream $sStream;
-
-    our $bgcolor = $html->{options}{bgcolor};
-    our $text 	 = $html->{options}{text};
-    our $title   = $html->_make_title;
-    our $base    = $html->{options}{base};
-    our $css     = $html->{options}{css};
-
-    $html->emit_toc;
-    our $toc = $sStream->get;
-
-    $html->emit_body;
-    our $body = $sStream->get;
-
-    my $template = new Text::Template SOURCE => $tSource or
-	die "Can't create Text::Template object: $Text::Template::ERROR\n";
-
-    $template->fill_in(OUTPUT => $fh) or
-	die $Text::Template::ERROR;
-}
-
-
-sub _make_title
-{
-    my $html  = shift;
-
-    my $title = $html->{options}{title};
-    defined $title and return $title;
-
-    my $children = $html->{root}->get_children;
-    my $node1;
-    my $i = 0;
-    for my $child (@$children)
-    {
-	is_pod $child or next;
-	$i++ and $node1 = $child;
-	$node1 and last;
-    }
-
-    $node1 or return undef;
-
-    my $text = $node1->get_deep_text;
-    ($title) = split m(\s+-), $text;
-
-    $title  or return undef;      # to quiet -w
-    $title =~ s(\s+$)();
-
-    $title
-}
-
-
-sub emit_toc
-{
-    my $html = shift;
-    $html->{options}{toc} or return;
-
-    my $root  = $html->{root};
-    my $nodes = $root->get_children;
-    my @nodes = @$nodes;
-
-    $html->_emit_toc_1(\@nodes);
-
-    $html->{options}{hr} > 0 and $html->{stream}->HR;
-}
-
-
-sub _emit_toc_1
-{
-    my($html, $nodes) = @_;
-    my $stream = $html->{stream};
-
-    $stream->UL;
-
-    while (@$nodes)
-    {
-	my $node = $nodes->[0];
-	is_c_head2 $node and $html->_emit_toc_2   ($nodes), next;
-	is_c_head1 $node and $html->_emit_toc_item($node );
-	shift @$nodes;
-    }
-
-    $stream->_UL;
-}
-
-
-sub _emit_toc_2
-{
-    my($html, $nodes) = @_;
-    my $stream = $html->{stream};
-
-    $stream->UL;
-
-    while (@$nodes)
-    {
-	my $node = $nodes->[0];
-	is_c_head1 $node and last;
-	is_c_head2 $node and $html->_emit_toc_item($node);
-	shift @$nodes;
-    }
-
-    $stream->_UL;
-}
-
-
-sub _emit_toc_item
-{
-    my($html, $node) = @_;
-    my $stream = $html->{stream};
-    my $target = $html->_make_anchor($node);
-
-    $stream->LI->A(HREF => "#$target");
-    $html->_emit_children($node);
-    $stream->_A;
-}
-
-
-sub emit_body
-{
-    my $html = shift;
-    my $root = $html->{root};
-    $html->_emit_children($root);
-}
-
-
-sub _emit_children
-{
-    my($html, $node) = @_;
-
-    my $children = $node->get_children;
-
-    for my $child (@$children)
-    {
-	$html->_emit_node($child);
-    }
-}
-
-
-sub _emit_siblings
-{
-    my($html, $node) = @_;
-
-    my $siblings = $node->get_siblings;
-
-    if (@$siblings==1 and $siblings->[0]{type} eq 'ordinary')
-    {
-	# don't put <p></p> around a single ordinary paragraph
-	$html->_emit_children($siblings->[0]);
-    }
-    else
-    {
-	for my $sibling (@$siblings)
-	{
-	    $html->_emit_node($sibling);
+	if ($template) {
+		$html->_template($template);
 	}
-    }
-    
+	else {
+		$html->_translate;
+	}
 }
 
+sub _translate {
+	my $html    = shift;
+	my $stream  = $html->{stream};
+	my $bgcolor = $html->{options}{bgcolor};
+	my $text    = $html->{options}{text};
+	my $title   = $html->_make_title;
+	my $base    = $html->{options}{base};
+	my $css     = $html->{options}{css};
 
-sub _emit_node
-{
-    my($html, $node) = @_;
-    my $type = $node->{type};
+	$stream->HTML->HEAD;
 
-    for ($type)
-    {
-	/command/  and $html->_emit_command ($node);
-	/for/      and $html->_emit_for     ($node);
-	/item/     and $html->_emit_item    ($node);
-	/list/     and $html->_emit_list    ($node);
-	/ordinary/ and $html->_emit_ordinary($node);
-	/sequence/ and $html->_emit_sequence($node);
-	/text/     and $html->_emit_text    ($node);
-	/verbatim/ and $html->_emit_verbatim($node);
-    }
+	defined $title and $stream->TITLE->text($title)->_TITLE;
+	defined $base  and $stream->BASE( href => $base );
+	defined $css   and $stream->LINK(
+		href => $css,
+		type => "text/css",
+		rel  => "stylesheet"
+	);
+
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+
+	$html->emit_toc;
+	$html->emit_body;
+
+	$stream->nl->_BODY->_HTML;
 }
 
+sub _template {
+	my ( $html, $tSource ) = @_;
 
-my %HeadTag = ( head1 => { 'open' => 'H1', 'close' => '_H1', level => 1 },
-	        head2 => { 'open' => 'H2', 'close' => '_H2', level => 2 },
-	        head3 => { 'open' => 'H3', 'close' => '_H3', level => 3 },
-	        head4 => { 'open' => 'H4', 'close' => '_H4', level => 4 } );
+	my $fh      = $html->{fh};
+	my $sStream = new Pod::Tree::StrStream;
+	$html->{stream} = new HTML::Stream $sStream;
 
-sub _emit_command
-{
-    my($html, $node) = @_;
-    my $stream   = $html->{stream};
-    my $command  = $node->get_command;
-    my $head_tag = $HeadTag{$command};
-    $head_tag or return;
-    my $anchor   = $html->_make_anchor($node);
+	our $bgcolor = $html->{options}{bgcolor};
+	our $text    = $html->{options}{text};
+	our $title   = $html->_make_title;
+	our $base    = $html->{options}{base};
+	our $css     = $html->{options}{css};
 
-    $html->_emit_hr($head_tag->{level});
+	$html->emit_toc;
+	our $toc = $sStream->get;
 
-    my $tag;
-    $tag = $head_tag->{'open'};
-    $stream->$tag()->A(NAME => $anchor);
+	$html->emit_body;
+	our $body = $sStream->get;
 
-    $html->_emit_children($node);
+	my $template = new Text::Template SOURCE => $tSource
+		or die "Can't create Text::Template object: $Text::Template::ERROR\n";
 
-    $tag = $head_tag->{'close'};
-    $stream->_A->$tag();
+	$template->fill_in( OUTPUT => $fh )
+		or die $Text::Template::ERROR;
 }
 
+sub _make_title {
+	my $html = shift;
 
-sub _emit_hr
-{
-    my($html, $level) = @_;
-    $html->{options}{hr} > $level or return;
-    $html->{skip_first}++ or return;
-    $html->{stream}->HR;
+	my $title = $html->{options}{title};
+	defined $title and return $title;
+
+	my $children = $html->{root}->get_children;
+	my $node1;
+	my $i = 0;
+	for my $child (@$children) {
+		is_pod $child or next;
+		$i++ and $node1 = $child;
+		$node1 and last;
+	}
+
+	$node1 or return undef;
+
+	my $text = $node1->get_deep_text;
+	($title) = split m(\s+-), $text;
+
+	$title or return undef;    # to quiet -w
+	$title =~ s(\s+$)();
+
+	$title;
 }
 
+sub emit_toc {
+	my $html = shift;
+	$html->{options}{toc} or return;
 
-sub _emit_for
-{
-    my($html, $node) = @_;
-    
-    my $interpreter = lc $node->get_arg;
-    my $emit        = "_emit_for_$interpreter";
+	my $root  = $html->{root};
+	my $nodes = $root->get_children;
+	my @nodes = @$nodes;
 
-    $html->$emit($node) if $html->can($emit);
+	$html->_emit_toc_1( \@nodes );
+
+	$html->{options}{hr} > 0 and $html->{stream}->HR;
 }
 
-sub _emit_for_html
-{
-    my($html, $node) = @_;
+sub _emit_toc_1 {
+	my ( $html, $nodes ) = @_;
+	my $stream = $html->{stream};
 
-    my $stream = $html->{stream};
-    $stream->P;
-    $stream->io->print($node->get_text);
-    $stream->_P;
+	$stream->UL;
+
+	while (@$nodes) {
+		my $node = $nodes->[0];
+		is_c_head2 $node and $html->_emit_toc_2($nodes), next;
+		is_c_head1 $node and $html->_emit_toc_item($node);
+		shift @$nodes;
+	}
+
+	$stream->_UL;
 }
 
-sub _emit_for_image
-{
-    my($html, $node) = @_;
+sub _emit_toc_2 {
+	my ( $html, $nodes ) = @_;
+	my $stream = $html->{stream};
 
-    my $stream = $html->{stream};
-    my $link    = $node->get_text;
-       $link    =~ s(\s+$)();
+	$stream->UL;
 
-    $stream->IMG(src => $link);
+	while (@$nodes) {
+		my $node = $nodes->[0];
+		is_c_head1 $node and last;
+		is_c_head2 $node and $html->_emit_toc_item($node);
+		shift @$nodes;
+	}
+
+	$stream->_UL;
 }
 
+sub _emit_toc_item {
+	my ( $html, $node ) = @_;
+	my $stream = $html->{stream};
+	my $target = $html->_make_anchor($node);
 
-sub _emit_item
-{
-    my($html, $node) = @_;
+	$stream->LI->A( HREF => "#$target" );
+	$html->_emit_children($node);
+	$stream->_A;
+}
 
-    my $stream    = $html->{stream};
-    my $item_type = $node->get_item_type;
-    for ($item_type)
-    {
-	/bullet/ and do
-	{
-	    $stream->LI();
-	    $html->_emit_siblings($node);
-	    $stream->_LI();
-	};
+sub emit_body {
+	my $html = shift;
+	my $root = $html->{root};
+	$html->_emit_children($root);
+}
 
-	/number/ and do
-	{
-	    $stream->LI();
-	    $html->_emit_siblings($node);
-	    $stream->_LI();
-	};
+sub _emit_children {
+	my ( $html, $node ) = @_;
 
-	/text/   and do
-	{
-	    my $anchor = $html->_make_anchor($node);
-	    $stream->DT->A(NAME => "$anchor");
-	    $html->_emit_children($node);
-	    $stream->_A->_DT->DD;
-	    $html->_emit_siblings($node);
-	    $stream->_DD;
-	};
-    }
+	my $children = $node->get_children;
+
+	for my $child (@$children) {
+		$html->_emit_node($child);
+	}
+}
+
+sub _emit_siblings {
+	my ( $html, $node ) = @_;
+
+	my $siblings = $node->get_siblings;
+
+	if ( @$siblings == 1 and $siblings->[0]{type} eq 'ordinary' ) {
+
+		# don't put <p></p> around a single ordinary paragraph
+		$html->_emit_children( $siblings->[0] );
+	}
+	else {
+		for my $sibling (@$siblings) {
+			$html->_emit_node($sibling);
+		}
+	}
 
 }
 
+sub _emit_node {
+	my ( $html, $node ) = @_;
+	my $type = $node->{type};
 
-my %ListTag  = (bullet => { 'open' => 'UL', 'close' => '_UL' },
-		number => { 'open' => 'OL', 'close' => '_OL' },
-		text   => { 'open' => 'DL', 'close' => '_DL' } );
-
-sub _emit_list
-{
-    my($html, $node) = @_;
-    my($list_tag, $tag);    # to quiet -w, see beloew
-
-    my $stream    = $html->{stream};
-    my $list_type = $node->get_list_type;
-
-    $list_type and $list_tag = $ListTag{$list_type};
-    $list_tag  and $tag      = $list_tag->{'open'};
-    $tag and $stream->$tag();
-
-    $html->_emit_children($node);
-    
-    $list_tag and $tag = $list_tag->{'close'};
-    $tag and $stream->$tag();
+	for ($type) {
+		/command/  and $html->_emit_command($node);
+		/for/      and $html->_emit_for($node);
+		/item/     and $html->_emit_item($node);
+		/list/     and $html->_emit_list($node);
+		/ordinary/ and $html->_emit_ordinary($node);
+		/sequence/ and $html->_emit_sequence($node);
+		/text/     and $html->_emit_text($node);
+		/verbatim/ and $html->_emit_verbatim($node);
+	}
 }
 
+my %HeadTag = (
+	head1 => { 'open' => 'H1', 'close' => '_H1', level => 1 },
+	head2 => { 'open' => 'H2', 'close' => '_H2', level => 2 },
+	head3 => { 'open' => 'H3', 'close' => '_H3', level => 3 },
+	head4 => { 'open' => 'H4', 'close' => '_H4', level => 4 }
+);
 
-sub _emit_ordinary
-{
-    my($html, $node) = @_;
-    my $stream = $html->{stream};
+sub _emit_command {
+	my ( $html, $node ) = @_;
+	my $stream   = $html->{stream};
+	my $command  = $node->get_command;
+	my $head_tag = $HeadTag{$command};
+	$head_tag or return;
+	my $anchor = $html->_make_anchor($node);
 
-    $stream->P;
-    $html->_emit_children($node);
-    $stream->_P;
+	$html->_emit_hr( $head_tag->{level} );
+
+	my $tag;
+	$tag = $head_tag->{'open'};
+	$stream->$tag()->A( NAME => $anchor );
+
+	$html->_emit_children($node);
+
+	$tag = $head_tag->{'close'};
+	$stream->_A->$tag();
 }
 
-
-sub _emit_sequence
-{
-    my($html, $node) = @_;
-
-    for ($node->get_letter)
-    {
-	/I|B|C|F/ and $html->_emit_element($node), last;
-	/S/       and $html->_emit_nbsp   ($node), last;
-	/L/       and $html->_emit_link   ($node), last;
-	/X/       and $html->_emit_index  ($node), last;
-	/E/       and $html->_emit_entity ($node), last;
-    }
+sub _emit_hr {
+	my ( $html, $level ) = @_;
+	$html->{options}{hr} > $level or return;
+	$html->{skip_first}++ or return;
+	$html->{stream}->HR;
 }
 
+sub _emit_for {
+	my ( $html, $node ) = @_;
 
-my %ElementTag = (I => { 'open' => 'I'   , 'close' => '_I'    },
-		  B => { 'open' => 'B'   , 'close' => '_B'    },
-		  C => { 'open' => 'CODE', 'close' => '_CODE' },
-		  F => { 'open' => 'I'   , 'close' => '_I'    } );
+	my $interpreter = lc $node->get_arg;
+	my $emit        = "_emit_for_$interpreter";
 
-sub _emit_element
-{
-    my($html, $node) = @_;
-
-    my $letter = $node->get_letter;
-    my $stream = $html->{stream};
-
-    my $tag;
-    $tag = $ElementTag{$letter}{'open'};
-    $stream->$tag();
-    $html->_emit_children($node);
-    $tag = $ElementTag{$letter}{'close'};
-    $stream->$tag();
+	$html->$emit($node) if $html->can($emit);
 }
 
+sub _emit_for_html {
+	my ( $html, $node ) = @_;
 
-sub _emit_nbsp
-{
-    my($html, $node) = @_;
-
-    my $old_method = $html->{text_method};
-    $html->{text_method} = 'text_nbsp';
-    $html->_emit_children($node);
-    $html->{text_method} = $old_method;
+	my $stream = $html->{stream};
+	$stream->P;
+	$stream->io->print( $node->get_text );
+	$stream->_P;
 }
 
+sub _emit_for_image {
+	my ( $html, $node ) = @_;
 
-sub _emit_link
-{
-    my($html, $node) = @_;
+	my $stream = $html->{stream};
+	my $link   = $node->get_text;
+	$link =~ s(\s+$)();
 
-    my $stream = $html->{stream};
-    my $target = $node->get_target;
-    my $domain = $target->get_domain;
-    my $method = "make_${domain}_URL";
-    my $url    = $html->$method($target);
-
-    $stream->A(HREF=>$url);
-    $html->_emit_children($node);
-    $stream->_A;
+	$stream->IMG( src => $link );
 }
 
-sub make_POD_URL
-{
-    my($html, $target) = @_;
+sub _emit_item {
+	my ( $html, $node ) = @_;
 
-    my $link_map = $html->{options}{link_map};
+	my $stream    = $html->{stream};
+	my $item_type = $node->get_item_type;
+	for ($item_type) {
+		/bullet/ and do {
+			$stream->LI();
+			$html->_emit_siblings($node);
+			$stream->_LI();
+		};
 
-    return $link_map->url($html, $target) if $link_map->can("url");
+		/number/ and do {
+			$stream->LI();
+			$html->_emit_siblings($node);
+			$stream->_LI();
+		};
 
-    $html->make_mapped_URL($target)
+		/text/ and do {
+			my $anchor = $html->_make_anchor($node);
+			$stream->DT->A( NAME => "$anchor" );
+			$html->_emit_children($node);
+			$stream->_A->_DT->DD;
+			$html->_emit_siblings($node);
+			$stream->_DD;
+		};
+	}
+
 }
 
+my %ListTag = (
+	bullet => { 'open' => 'UL', 'close' => '_UL' },
+	number => { 'open' => 'OL', 'close' => '_OL' },
+	text   => { 'open' => 'DL', 'close' => '_DL' }
+);
 
-sub make_mapped_URL
-{
-    my($html, $target) = @_;
+sub _emit_list {
+	my ( $html, $node ) = @_;
+	my ( $list_tag, $tag );    # to quiet -w, see beloew
 
-    my $link_map = $html->{options}{link_map};
-    my $base     = $html->{options}{base} || '';
-    my $page     = $target->get_page;
-    my $section  = $target->get_section;
-    my $depth    = $html->{options}{depth};
+	my $stream    = $html->{stream};
+	my $list_type = $node->get_list_type;
 
-    ($base, $page, $section) = $link_map->map($base, $page, $section, $depth);
+	$list_type and $list_tag = $ListTag{$list_type};
+	$list_tag  and $tag      = $list_tag->{'open'};
+	$tag       and $stream->$tag();
 
-       $base     =~ s(/$)();
-       $page    .= '.html' if $page;
-    my $fragment = $html->escape_2396($section);
-    my $url      = $html->assemble_url($base, $page, $fragment);
+	$html->_emit_children($node);
 
-    $url
+	$list_tag and $tag = $list_tag->{'close'};
+	$tag and $stream->$tag();
 }
 
-sub make_HTTP_URL
-{
-    my($html, $target) = @_;
+sub _emit_ordinary {
+	my ( $html, $node ) = @_;
+	my $stream = $html->{stream};
 
-    $target->get_page
+	$stream->P;
+	$html->_emit_children($node);
+	$stream->_P;
 }
 
+sub _emit_sequence {
+	my ( $html, $node ) = @_;
 
-sub _emit_index
-{
-    my($html, $node) = @_;
-
-    my $stream = $html->{stream};
-    my $anchor = $html->_make_anchor($node);
-    $stream->A(NAME=>$anchor)->_A;
+	for ( $node->get_letter ) {
+		/I|B|C|F/ and $html->_emit_element($node), last;
+		/S/       and $html->_emit_nbsp($node),    last;
+		/L/       and $html->_emit_link($node),    last;
+		/X/       and $html->_emit_index($node),   last;
+		/E/       and $html->_emit_entity($node),  last;
+	}
 }
 
+my %ElementTag = (
+	I => { 'open' => 'I',    'close' => '_I' },
+	B => { 'open' => 'B',    'close' => '_B' },
+	C => { 'open' => 'CODE', 'close' => '_CODE' },
+	F => { 'open' => 'I',    'close' => '_I' }
+);
 
-sub _emit_entity
-{
-    my($html, $node) = @_;
+sub _emit_element {
+	my ( $html, $node ) = @_;
 
-    my $stream = $html->{stream};
-    my $entity  = $node->get_deep_text;
-    $stream->ent($entity);
+	my $letter = $node->get_letter;
+	my $stream = $html->{stream};
+
+	my $tag;
+	$tag = $ElementTag{$letter}{'open'};
+	$stream->$tag();
+	$html->_emit_children($node);
+	$tag = $ElementTag{$letter}{'close'};
+	$stream->$tag();
 }
 
+sub _emit_nbsp {
+	my ( $html, $node ) = @_;
 
-sub _emit_text
-{
-    my($html, $node) = @_;
-    my $stream       = $html->{stream};
-    my $text         = $node->get_text;
-    my $text_method  = $html->{text_method};
-
-    $stream->$text_method($text);
+	my $old_method = $html->{text_method};
+	$html->{text_method} = 'text_nbsp';
+	$html->_emit_children($node);
+	$html->{text_method} = $old_method;
 }
 
+sub _emit_link {
+	my ( $html, $node ) = @_;
 
-sub _emit_verbatim
-{
-    my($html, $node) = @_;
-    my $stream = $html->{stream};
-    my $text   = $node->get_text;
-       $text   =~ s(\n\n$)();
+	my $stream = $html->{stream};
+	my $target = $node->get_target;
+	my $domain = $target->get_domain;
+	my $method = "make_${domain}_URL";
+	my $url    = $html->$method($target);
 
-    $stream->PRE->text($text)->_PRE;
+	$stream->A( HREF => $url );
+	$html->_emit_children($node);
+	$stream->_A;
 }
 
+sub make_POD_URL {
+	my ( $html, $target ) = @_;
 
-sub _make_anchor
-{
-    my($html, $node) = @_;
-    my $text = $node->get_deep_text;
-       $text =~ s(   \s*\n\s*/  )( )xg;  # close line breaks
-       $text =~ s( ^\s+ | \s+$  )()xg;   # clip leading and trailing WS
-       $html->escape_2396($text)
+	my $link_map = $html->{options}{link_map};
+
+	return $link_map->url( $html, $target ) if $link_map->can("url");
+
+	$html->make_mapped_URL($target);
 }
 
- 
+sub make_mapped_URL {
+	my ( $html, $target ) = @_;
+
+	my $link_map = $html->{options}{link_map};
+	my $base     = $html->{options}{base} || '';
+	my $page     = $target->get_page;
+	my $section  = $target->get_section;
+	my $depth    = $html->{options}{depth};
+
+	( $base, $page, $section ) = $link_map->map( $base, $page, $section, $depth );
+
+	$base =~ s(/$)();
+	$page .= '.html' if $page;
+	my $fragment = $html->escape_2396($section);
+	my $url = $html->assemble_url( $base, $page, $fragment );
+
+	$url;
+}
+
+sub make_HTTP_URL {
+	my ( $html, $target ) = @_;
+
+	$target->get_page;
+}
+
+sub _emit_index {
+	my ( $html, $node ) = @_;
+
+	my $stream = $html->{stream};
+	my $anchor = $html->_make_anchor($node);
+	$stream->A( NAME => $anchor )->_A;
+}
+
+sub _emit_entity {
+	my ( $html, $node ) = @_;
+
+	my $stream = $html->{stream};
+	my $entity = $node->get_deep_text;
+	$stream->ent($entity);
+}
+
+sub _emit_text {
+	my ( $html, $node ) = @_;
+	my $stream      = $html->{stream};
+	my $text        = $node->get_text;
+	my $text_method = $html->{text_method};
+
+	$stream->$text_method($text);
+}
+
+sub _emit_verbatim {
+	my ( $html, $node ) = @_;
+	my $stream = $html->{stream};
+	my $text   = $node->get_text;
+	$text =~ s(\n\n$)();
+
+	$stream->PRE->text($text)->_PRE;
+}
+
+sub _make_anchor {
+	my ( $html, $node ) = @_;
+	my $text = $node->get_deep_text;
+	$text =~ s(   \s*\n\s*/  )( )xg;    # close line breaks
+	$text =~ s( ^\s+ | \s+$  )()xg;     # clip leading and trailing WS
+	$html->escape_2396($text);
+}
+
 sub bin { oct '0b' . join '', @_ }
 
-my @LinkFormat = ( sub { my($b,$p,$f)=@_; ""         },
-		   sub { my($b,$p,$f)=@_;      "#$f" },
-                   sub { my($b,$p,$f)=@_;    "$p"    },
-                   sub { my($b,$p,$f)=@_;    "$p#$f" },
-                   sub { my($b,$p,$f)=@_; "$b/"      },
-                   sub { my($b,$p,$f)=@_;      "#$f" },
-                   sub { my($b,$p,$f)=@_; "$b/$p"    },
-                   sub { my($b,$p,$f)=@_; "$b/$p#$f" } );
+my @LinkFormat = (
+	sub { my ( $b, $p, $f ) = @_; "" },
+	sub { my ( $b, $p, $f ) = @_; "#$f" },
+	sub { my ( $b, $p, $f ) = @_; "$p" },
+	sub { my ( $b, $p, $f ) = @_; "$p#$f" },
+	sub { my ( $b, $p, $f ) = @_; "$b/" },
+	sub { my ( $b, $p, $f ) = @_; "#$f" },
+	sub { my ( $b, $p, $f ) = @_; "$b/$p" },
+	sub { my ( $b, $p, $f ) = @_; "$b/$p#$f" }
+);
 
-sub assemble_url
-{
-    my($html, $base, $page, $fragment) = @_;
+sub assemble_url {
+	my ( $html, $base, $page, $fragment ) = @_;
 
-    my $i    = bin map { length($_) ? 1 : 0 } ($base, $page, $fragment);
-    my $url  = $LinkFormat[$i]($base, $page, $fragment);
+	my $i = bin map { length($_) ? 1 : 0 } ( $base, $page, $fragment );
+	my $url = $LinkFormat[$i]( $base, $page, $fragment );
 
-    $url
+	$url;
 }
 
-sub escape_2396
-{
-    my($html, $text) = @_;
-    $text =~ s(([^\w\-.!~*'()]))(sprintf("%%%02x", ord($1)))eg;
-    $text
+sub escape_2396 {
+	my ( $html, $text ) = @_;
+	$text =~ s(([^\w\-.!~*'()]))(sprintf("%%%02x", ord($1)))eg;
+	$text;
 }
-
 
 package Pod::Tree::HTML::LinkMap;
 
-sub new
-{
-    my $class = shift;
-    bless {}, $class
+sub new {
+	my $class = shift;
+	bless {}, $class;
 }
 
-sub url
-{
-    my($link_map, $html, $target) = @_;
+sub url {
+	my ( $link_map, $html, $target ) = @_;
 
-    my $depth    = $html->{options}{depth};
-    my $base     = join '/', ('..') x $depth;
+	my $depth = $html->{options}{depth};
+	my $base = join '/', ('..') x $depth;
 
-    my $page     = $target->get_page;
-       $page     =~ s(::)(/)g;
-       $page    .= '.html' if $page;
+	my $page = $target->get_page;
+	$page =~ s(::)(/)g;
+	$page .= '.html' if $page;
 
-    my $section  = $target->get_section;
-    my $fragment = $html->escape_2396 ($section);
+	my $section  = $target->get_section;
+	my $fragment = $html->escape_2396($section);
 
-    my $url      = $html->assemble_url($base, $page, $fragment);
-    $url
+	my $url = $html->assemble_url( $base, $page, $fragment );
+	$url;
 }
-
 
 __END__
 

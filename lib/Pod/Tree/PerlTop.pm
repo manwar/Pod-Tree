@@ -3,212 +3,188 @@ use 5.005;
 use Pod::Tree::HTML;
 use Pod::Tree::PerlUtil;
 
-
 package Pod::Tree::HTML::PerlTop;
 
 use base qw(Pod::Tree::HTML);
 
-sub set_links
-{
-    my($html, $links) = @_;
-    $html->{links} = $links;
+sub set_links {
+	my ( $html, $links ) = @_;
+	$html->{links} = $links;
 }
 
+sub _emit_verbatim {
+	my ( $html, $node ) = @_;
+	my $stream = $html->{stream};
+	my $links  = $html->{links};
+	my $text   = $node->get_text;
 
-sub _emit_verbatim
-{
-    my($html, $node) = @_;
-    my $stream = $html->{stream};
-    my $links  = $html->{links};
-    my $text   = $node->get_text;
+	$text =~ s( \n\n$ )()x;
+	my @words = split m/(\s+)/, $text;
 
-    $text =~ s( \n\n$ )()x;
-    my @words = split m/(\s+)/, $text;
-	
-    $stream->PRE;
+	$stream->PRE;
 
-    for my $word (@words)
-    {
-	if ($links->{$word})
-	{
-	    my $link = $links->{$word};
-	    $stream->A(HREF => "$link.html")->text($word)->_A;
+	for my $word (@words) {
+		if ( $links->{$word} ) {
+			my $link = $links->{$word};
+			$stream->A( HREF => "$link.html" )->text($word)->_A;
+		}
+		else {
+			$stream->text($word);
+		}
 	}
-	else
-	{
-	    $stream->text($word);
-	}
-    }
 
-    $stream->_PRE;
+	$stream->_PRE;
 }
-
 
 package Pod::Tree::PerlTop;
 
 use base qw(Pod::Tree::PerlUtil);
 
+sub new {
+	my %defaults = (
+		bgcolor => '#ffffff',
+		text    => '#000000'
+	);
 
-sub new
-{
-    my %defaults = (bgcolor   => '#ffffff',
-		    text      => '#000000');
+	my ( $class, $perl_dir, $html_dir, $link_map, %options ) = @_;
+	my $options = { %defaults, %options, link_map => $link_map };
 
-    my($class, $perl_dir, $html_dir, $link_map, %options) = @_;
-    my $options = { %defaults, %options, link_map => $link_map };
+	my $pod_src = -d "$perl_dir/pod"
+		? 'pod'         # for building the doc set from a Perl distribution
+		: 'lib/pod';    # for building the doc set from a Windows installation
 
-    my $pod_src = -d "$perl_dir/pod"
-	? 'pod' 	# for building the doc set from a Perl distribution	
-	: 'lib/pod';    # for building the doc set from a Windows installation
+	my $perl_top = {
+		perl_dir => $perl_dir,
+		html_dir => $html_dir,
+		index    => 'index.html',
+		pod_src  => 'pod',
+		pod_dst  => 'pod',
+		page     => 'perl',
+		options  => $options
+	};
 
-    my $perl_top = { perl_dir => $perl_dir,
-		     html_dir => $html_dir,
-		     index    => 'index.html',
-		     pod_src  => 'pod',
-		     pod_dst  => 'pod',
-		     page     => 'perl',
-		     options  => $options };
-
-    bless $perl_top, $class
+	bless $perl_top, $class;
 }
 
+sub index {
+	my ( $perl_top, @translators ) = @_;
+	$perl_top->report1("index");
 
-sub index
-{
-    my($perl_top, @translators) = @_;
-       $perl_top->report1("index");
+	my @entries = map { $_->get_top_entry } @translators;
 
-    my @entries  = map { $_->get_top_entry } @translators;
+	my $html_dir = $perl_top->{html_dir};
+	my $dest     = "$html_dir/index.html";
 
-    my $html_dir = $perl_top->{html_dir};
-    my $dest     = "$html_dir/index.html";
+	my $fh = new IO::File ">$dest";
+	defined $fh or die "Pod::Tree::PerlTop::index: Can't open $dest: $!\n";
+	my $stream = new HTML::Stream $fh;
 
-    my $fh       = new IO::File ">$dest";
-    defined $fh or die "Pod::Tree::PerlTop::index: Can't open $dest: $!\n";
-    my $stream   = new HTML::Stream $fh;
+	my $options = $perl_top->{options};
+	my $bgcolor = $options->{bgcolor};
+	my $text    = $options->{text};
+	my $title   = "Perl Documentation";
 
-    my $options  = $perl_top->{options};
-    my $bgcolor  = $options->{bgcolor};
-    my $text 	 = $options->{text};
-    my $title    = "Perl Documentation";
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
 
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
+	$perl_top->_emit_entries( $stream, @entries );
 
-    $perl_top->_emit_entries($stream, @entries);
-
-    $stream->_BODY->_HTML;
+	$stream->_BODY->_HTML;
 }
 
+sub _emit_entries {
+	my ( $perl_top, $stream, @entries ) = @_;
 
-sub _emit_entries
-{
-    my($perl_top, $stream, @entries) = @_;
+	$stream->UL;
 
-    $stream->UL;
+	for my $entry (@entries) {
+		$stream->LI->A( HREF => $entry->{URL} )->t( $entry->{description} )->_A->_LI;
+	}
 
-    for my $entry (@entries)
-    {
-	$stream->LI
-	       ->A(HREF => $entry->{URL})
-	       ->t($entry->{description})
-	       ->_A
-	       ->_LI;
-    }
-
-    $stream->_UL;
+	$stream->_UL;
 }
 
+sub translate {
+	my $perl_top = shift;
+	$perl_top->report1("translate");
+	my $perl_dir = $perl_top->{perl_dir};
+	my $options  = $perl_top->{options};
 
-sub translate
-{
-    my $perl_top = shift;
-       $perl_top->report1("translate");
-    my $perl_dir = $perl_top->{perl_dir};
-    my $options  = $perl_top->{options};
+	$options->{link_map}->set_depth(1);
 
-       $options->{link_map}->set_depth(1);
+	my $html_dir = $perl_top->{html_dir};
+	my $pod_src  = $perl_top->{pod_src};
+	my $pod_dst  = $perl_top->{pod_dst};
+	my $page     = $perl_top->{page};
+	my $source   = "$perl_dir/$pod_src/$page.pod";
+	my $dest     = "$html_dir/$pod_dst/$page.html";
+	my $html     = new Pod::Tree::HTML::PerlTop $source, $dest, %$options;
+	my $links    = $perl_top->_get_links;
 
-    my $html_dir = $perl_top->{html_dir};
-    my $pod_src  = $perl_top->{pod_src};
-    my $pod_dst  = $perl_top->{pod_dst};
-    my $page     = $perl_top->{page};
-    my $source   = "$perl_dir/$pod_src/$page.pod";
-    my $dest     = "$html_dir/$pod_dst/$page.html";
-    my $html     = new Pod::Tree::HTML::PerlTop $source, $dest, %$options;
-    my $links    = $perl_top->_get_links;
-
-    $html->set_links($links);
-    $html->translate;
+	$html->set_links($links);
+	$html->translate;
 }
 
+sub get_top_entry {
+	my $perl_top = shift;
 
-sub get_top_entry
-{
-    my $perl_top = shift;
+	my $pod_dst = $perl_top->{pod_dst};
+	my $page    = $perl_top->{page};
 
-    my $pod_dst = $perl_top->{pod_dst};
-    my $page    = $perl_top->{page};
-
-    +{ URL         => "$pod_dst/$page.html",
-       description => 'perl(1)' }
+	+{
+		URL         => "$pod_dst/$page.html",
+		description => 'perl(1)'
+	};
 }
 
+sub _get_links {
+	my $perl_top = shift;
 
-sub _get_links
-{
-    my $perl_top = shift;
+	my $links = {};
+	$perl_top->_get_pod_links($links);
+	$perl_top->_get_dist_links($links);
 
-    my $links = {};
-    $perl_top->_get_pod_links ($links);
-    $perl_top->_get_dist_links($links);
-
-    $links
+	$links;
 }
 
-sub _get_pod_links
-{
-    my($perl_top, $links) = @_;
+sub _get_pod_links {
+	my ( $perl_top, $links ) = @_;
 
-    my $perl_dir = $perl_top->{perl_dir};
-    my $pod_src  = $perl_top->{pod_src};
+	my $perl_dir = $perl_top->{perl_dir};
+	my $pod_src  = $perl_top->{pod_src};
 
-    my $dir = "$perl_dir/$pod_src";
-    opendir(DIR, $dir) or 
-	die "Pod::Tree::PerlTop::get_pod_links: Can't opendir $dir: $!\n";
-    my @files = readdir(DIR);
-    closedir(DIR);
+	my $dir = "$perl_dir/$pod_src";
+	opendir( DIR, $dir )
+		or die "Pod::Tree::PerlTop::get_pod_links: Can't opendir $dir: $!\n";
+	my @files = readdir(DIR);
+	closedir(DIR);
 
-    my @pods   = grep {  m( \.pod$ )x    } @files;
-    my @others = grep { $_ ne 'perl.pod' } @pods;
+	my @pods   = grep {m( \.pod$ )x} @files;
+	my @others = grep { $_ ne 'perl.pod' } @pods;
 
-    for my $other (@others)
-    {
-	$other =~ s( \.pod$ )()x;
-	$links->{$other} = $other;
-    }
+	for my $other (@others) {
+		$other =~ s( \.pod$ )()x;
+		$links->{$other} = $other;
+	}
 }
 
-sub _get_dist_links
-{
-    my($perl_top, $links) = @_;
+sub _get_dist_links {
+	my ( $perl_top, $links ) = @_;
 
-    my $dir = $perl_top->{perl_dir};
-    opendir(DIR, $dir) or 
-	die "Pod::Tree::PerlTop::get_dist_links: Can't opendir $dir: $!\n";
-    my @files = readdir(DIR);
-    closedir(DIR);
+	my $dir = $perl_top->{perl_dir};
+	opendir( DIR, $dir )
+		or die "Pod::Tree::PerlTop::get_dist_links: Can't opendir $dir: $!\n";
+	my @files = readdir(DIR);
+	closedir(DIR);
 
-    my @README = grep { /^README/ } @files;
+	my @README = grep {/^README/} @files;
 
-    for my $file (@README) 
-    { 
-	my($base, $ext) = split m(\.), $file;
-	$links->{"perl$ext"} = "../$file";
-    }
+	for my $file (@README) {
+		my ( $base, $ext ) = split m(\.), $file;
+		$links->{"perl$ext"} = "../$file";
+	}
 }
 
 1

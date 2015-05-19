@@ -3,91 +3,79 @@ use 5.005;
 
 package Pod::Tree::PerlUtil;
 
+sub mkdir {
+	my ( $translator, $dir ) = @_;
 
-sub mkdir
-{
-    my($translator, $dir) = @_;
-
-    -d $dir or CORE::mkdir $dir, 0755 or 
-	die "Pod::Tree::PerlUtil::mkdir: Can't mkdir $dir: $!\n";
+	-d $dir
+		or CORE::mkdir $dir, 0755
+		or die "Pod::Tree::PerlUtil::mkdir: Can't mkdir $dir: $!\n";
 }
 
+sub report1 {
+	my ( $translator, $routine ) = @_;
 
-sub report1
-{
-    my($translator, $routine) = @_;
+	$translator->{options}{v} < 1 and return;
 
-    $translator->{options}{v} < 1 and return;
-
-    my $package = ref $translator;
-    my $name = "${package}::$routine";
-    my $pad = 60 - length $name;
-    print STDERR $name, ' ' x $pad, "\n";
+	my $package = ref $translator;
+	my $name    = "${package}::$routine";
+	my $pad     = 60 - length $name;
+	print STDERR $name, ' ' x $pad, "\n";
 }
 
+sub report2 {
+	my ( $translator, $page ) = @_;
 
-sub report2
-{
-    my($translator, $page) = @_;
+	my $verbosity = $translator->{options}{v};
 
-    my $verbosity = $translator->{options}{v};
+	$verbosity == 2 and do {
+		my $pad = 60 - length $page;
+		print STDERR $page, ' ' x $pad, "\r";
+	};
 
-    $verbosity==2 and do
-    {
-	my $pad = 60 - length $page;
-	print STDERR $page, ' ' x $pad, "\r";
-    };
-
-    $verbosity==3 and print STDERR "$page\n";
+	$verbosity == 3 and print STDERR "$page\n";
 }
 
+sub get_name {
+	my ( $node, $source ) = @_;
 
-sub get_name
-{
-    my($node, $source) = @_;
+	my $tree = new Pod::Tree;
+	$tree->load_file($source);
+	my $children = $tree->get_root->get_children;
+	my @pod      = grep { is_pod $_ } @$children;
+	my $node1    = $pod[1];
+	$node1 or return ();
 
-    my $tree     = new Pod::Tree;
-       $tree->load_file($source);
-    my $children = $tree->get_root->get_children;
-    my @pod      = grep { is_pod $_ } @$children;
-    my $node1    = $pod[1];
-       $node1 or return ();
+	my $text = $node1->get_deep_text;
+	$text =~ s(\s+)( )g;
+	$text =~ s(^ )();
+	$text =~ s( $)();
 
-    my $text     = $node1->get_deep_text;
-       $text     =~ s(\s+)( )g;
-       $text     =~ s(^ )();
-       $text     =~ s( $)();
+	my ( $name, $description ) = split m(\s+-+\s+), $text, 2;
+	$name or return ();    # empty!!!
 
-    my($name, $description) = split m(\s+-+\s+), $text, 2;
-       $name or return ();  # empty!!!
-
-    if ($name =~ /\s/ and not $description)
-    {
-	$description = $name;
-	my @description = split ' ', $description;
-	if (@description > 1 and $description[0] =~ /::/)
-	{
-	    $name        = shift     @description; # guess
-	    $description = join ' ', @description;
+	if ( $name =~ /\s/ and not $description ) {
+		$description = $name;
+		my @description = split ' ', $description;
+		if ( @description > 1 and $description[0] =~ /::/ ) {
+			$name = shift @description;              # guess
+			$description = join ' ', @description;
+		}
+		else                                         # desperation
+		{
+			my @source = split m(/), $source;
+			$name = pop @source;
+		}
 	}
-	else # desperation
-	{
-	    my @source = split m(/), $source;
-	    $name      = pop @source;
-	}
-    }
 
-      ($name, $description)
+	( $name, $description );
 }
 
-sub get_description
-{
-    my($node, $source) = @_;
+sub get_description {
+	my ( $node, $source ) = @_;
 
-    my($name, $description) = $node->get_name($source);
-    $description
+	my ( $name, $description ) = $node->get_name($source);
+	$description;
 }
-
 
 1
 

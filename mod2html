@@ -8,143 +8,122 @@ use HTML::Stream;
 use IO::File;
 use Pod::Tree::HTML;
 
-my %Options = (bgcolor => '#ffffff');
+my %Options = ( bgcolor => '#ffffff' );
 my %Index;
 
-my $ok = GetOptions(\%Options, 
-		    "base:s",
-		    "css:s",
-		    "index:s", 
-		    "toc!", 
-		    "hr:i", 
-		    "bgcolor:s", 
-		    "text:s");
+my $ok = GetOptions( \%Options, "base:s", "css:s", "index:s", "toc!", "hr:i", "bgcolor:s", "text:s" );
 $ok or die "Bad command line options\n";
 
-my($ModDir, $HTMLDir) = @ARGV;
+my ( $ModDir, $HTMLDir ) = @ARGV;
 $HTMLDir or die "mod2html modDir HTMLDir\n";
 
-$ModDir  =~ s( /$ )()x;
+$ModDir =~ s( /$ )()x;
 $HTMLDir =~ s( /$ )()x;
 
 mkpath($HTMLDir);
 
-my $HTML_inode = (stat $HTMLDir)[1];
+my $HTML_inode = ( stat $HTMLDir )[1];
 
 umask 0022;
 
-find({ wanted   => \&Translate,
-       no_chdir => 1          }, $ModDir);
+find(
+	{
+		wanted   => \&Translate,
+		no_chdir => 1
+	},
+	$ModDir
+);
 
 Index() if $Options{index};
 
-
-sub Translate
-{
-    -d and &Translate_Dir;
-    -f and &Translate_POD;
+sub Translate {
+	-d and &Translate_Dir;
+	-f and &Translate_POD;
 }
 
+sub Translate_Dir {
+	my $dir   = $File::Find::name;
+	my $inode = ( stat $dir )[1];    # always 0 on Win32
 
-sub Translate_Dir
-{
-    my $dir   = $File::Find::name;
-    my $inode = (stat $dir)[1];     # always 0 on Win32
+	if ( $inode and $inode == $HTML_inode ) {
+		$File::Find::prune = 1;
+		return;
+	}
 
-    if ($inode and $inode == $HTML_inode)
-    {
-	$File::Find::prune = 1;
-	return;
-    }
-
-    $dir =~ s/^$ModDir/$HTMLDir/o;
-    -d $dir or mkdir $dir, 0755 or die "Can't mkdir $dir: $!\n";
-    print "$File::Find::name\n";
+	$dir =~ s/^$ModDir/$HTMLDir/o;
+	-d $dir or mkdir $dir, 0755 or die "Can't mkdir $dir: $!\n";
+	print "$File::Find::name\n";
 }
 
+sub Translate_POD {
+	m( \.(pm|pod)$ )x or return;
+	my $source = $File::Find::name;
 
-sub Translate_POD
-{
-    m( \.(pm|pod)$ )x or return;
-    my $source = $File::Find::name;
+	Hidden($source) and return;
+	print "$source\n";
 
-    Hidden($source) and return;
-    print "$source\n";
+	my $dest = $source;
+	$dest =~ s/^$ModDir/$HTMLDir/;
+	$dest =~ s( \.\w+$ )(.html)x;
 
-    my $dest = $source;
-    $dest =~ s/^$ModDir/$HTMLDir/;
-    $dest =~ s( \.\w+$ )(.html)x;
+	my $depth = Depth($source);
 
-    my $depth = Depth($source);
+	my $pod = $source;
+	$pod =~ s(^$ModDir/)();
+	$pod =~ s( \.\w+$ )()x;
+	$Index{$pod} = 1;
 
-    my $pod = $source;
-    $pod =~ s(^$ModDir/)();
-    $pod =~ s( \.\w+$ )()x;
-    $Index{$pod} = 1;
-
-    my $html = new Pod::Tree::HTML $source, $dest;
-    $html->set_options(%Options, depth => $depth);
-    $html->translate;
+	my $html = new Pod::Tree::HTML $source, $dest;
+	$html->set_options( %Options, depth => $depth );
+	$html->translate;
 }
 
-sub Hidden
-{
-    my $source = shift;
-       $source =~ m(\.pm$) or return 0;
-       $source =~ s(\.pm$)(.pod);
-    -e $source
+sub Hidden {
+	my $source = shift;
+	$source =~ m(\.pm$) or return 0;
+	$source =~ s(\.pm$)(.pod);
+	-e $source;
 }
 
-sub Depth
-{
-    my $path  = shift;
-       $path  =~ s(^$ModDir/)();
-    my @path  = split m(/), $path;
-       @path - 1
+sub Depth {
+	my $path = shift;
+	$path =~ s(^$ModDir/)();
+	my @path = split m(/), $path;
+	@path - 1;
 }
 
-sub Index
-{
-    my $index   = "$HTMLDir/index.html";
-    my $fh      = new IO::File ">$index";
-    defined $fh or die "Can't open $index: $!\n";
+sub Index {
+	my $index = "$HTMLDir/index.html";
+	my $fh    = new IO::File ">$index";
+	defined $fh or die "Can't open $index: $!\n";
 
-    my $stream  = new HTML::Stream $fh;
+	my $stream = new HTML::Stream $fh;
 
-    my $title   = $Options{index};
-    my $bgcolor = $Options{bgcolor};
-    my $text 	= $Options{text};
+	my $title   = $Options{index};
+	my $bgcolor = $Options{bgcolor};
+	my $text    = $Options{text};
 
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
 
-    Emit_Entries($stream);
+	Emit_Entries($stream);
 
-    $stream->_BODY->_HTML;
+	$stream->_BODY->_HTML;
 }
 
+sub Emit_Entries {
+	my $stream = shift;
 
-sub Emit_Entries
-{
-    my $stream = shift;
+	$stream->UL;
 
-    $stream->UL;
+	for my $entry ( sort keys %Index ) {
+		$stream->LI->A( HREF => "$entry.html" )->t($entry)->_A->_LI;
+	}
 
-    for my $entry (sort keys %Index)
-    {
-	$stream->LI
-	       ->A(HREF => "$entry.html")
-	       ->t($entry)
-	       ->_A
-	       ->_LI;
-    }
-
-    $stream->_UL;
+	$stream->_UL;
 }
-
 
 __END__
 

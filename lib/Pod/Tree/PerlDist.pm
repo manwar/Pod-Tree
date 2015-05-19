@@ -9,216 +9,203 @@ package Pod::Tree::PerlDist;
 
 use base qw(Pod::Tree::PerlUtil);
 
+sub new {
+	my %defaults = (
+		bgcolor => '#ffffff',
+		text    => '#000000'
+	);
 
-sub new
-{
-    my %defaults = (bgcolor   => '#ffffff',
-		    text      => '#000000');
+	my @stop_base = qw(Configure
+		configpm configure
+		installhtml installman installperl
+		mv-if-diff
+		perlsh);
 
-    my @stop_base = qw(Configure
-		       configpm configure
-		       installhtml installman installperl
-		       mv-if-diff
-		       perlsh);
+	my ( $class, $perl_dir, $html_dir, $link_map, %options ) = @_;
+	my $options = { %defaults, %options, link_map => $link_map };
 
-    my($class, $perl_dir, $html_dir, $link_map, %options) = @_;
-    my $options   = { %defaults, %options, link_map => $link_map };
+	my $perl_dist = {
+		perl_dir  => $perl_dir,
+		html_dir  => $html_dir,
+		top_page  => 'dist.html',
+		stop_ext  => [qw(SH c diff fixer h pl sym y)],
+		stop_base => [@stop_base],
+		depth     => 0,
+		options   => $options
+	};
 
-    my $perl_dist = { perl_dir  => $perl_dir,
-		      html_dir  => $html_dir,
-		      top_page  => 'dist.html',
-		      stop_ext  => [qw(SH c diff fixer h pl sym y)],
-		      stop_base => [@stop_base],
-		      depth     => 0,
-		      options   => $options };
-
-    bless $perl_dist, $class
+	bless $perl_dist, $class;
 }
 
+sub scan {
+	my $perl_dist = shift;
+	$perl_dist->report1("scan");
 
-sub scan
-{
-    my $perl_dist = shift;
-       $perl_dist->report1("scan");
+	my $perl_dir = $perl_dist->{perl_dir};
+	my $html_dir = $perl_dist->{html_dir};
+	opendir( DIR, $perl_dir ) or die "Can't opendir $perl_dir: $!\n";
 
-    my $perl_dir  = $perl_dist->{perl_dir};
-    my $html_dir  = $perl_dist->{html_dir};
-    opendir(DIR, $perl_dir) or die "Can't opendir $perl_dir: $!\n";
+	my $stop_ext = $perl_dist->{stop_ext};
+	my %stop_ext = map { $_ => 1 } @$stop_ext;
 
-    my $stop_ext  = $perl_dist->{stop_ext};
-    my %stop_ext  = map { $_ => 1 } @$stop_ext;
+	my $stop_base = $perl_dist->{stop_base};
+	my %stop_base = map { $_ => 1 } @$stop_base;
 
-    my $stop_base = $perl_dist->{stop_base};
-    my %stop_base = map { $_ => 1 } @$stop_base;
+	for my $file ( readdir(DIR) ) {
+		-f "$perl_dir/$file" and -T "$perl_dir/$file" or next;
 
-    for my $file (readdir(DIR))
-    {
-	-f "$perl_dir/$file" and -T "$perl_dir/$file" or next;
+		my ( $base, $ext ) = split m(\.), $file;
+		$stop_ext{$ext}   and next;
+		$stop_base{$base} and next;
 
-	my($base, $ext) = split m(\.), $file;
-	$stop_ext {$ext } and next;
-	$stop_base{$base} and next;
-
-	$perl_dist->report2  ($file);	
-	$perl_dist->scan_file($file);
-    }
+		$perl_dist->report2($file);
+		$perl_dist->scan_file($file);
+	}
 }
 
+sub scan_file {
+	my ( $perl_dist, $file ) = @_;
 
-sub scan_file
-{
-    my($perl_dist, $file) = @_;
+	my $perl_dir = $perl_dist->{perl_dir};
+	my $html_dir = $perl_dist->{html_dir};
 
-    my $perl_dir = $perl_dist->{perl_dir};
-    my $html_dir = $perl_dist->{html_dir};
+	my $source = "$perl_dir/$file";
+	my $dest   = "$html_dir/$file.html";
 
-    my $source   = "$perl_dir/$file";
-    my $dest     = "$html_dir/$file.html";
+	my $entry = {
+		file   => $file,
+		source => $source,
+		dest   => $dest
+	};
 
-    my $entry = { file   => $file,
-		  source => $source,
-		  dest   => $dest    };
+	$perl_dist->{index}{$file} = $entry;
+	$perl_dist->{options}{link_map}->add_page( $file, $file );
 
-    $perl_dist->{index}{$file} = $entry;
-    $perl_dist->{options}{link_map}->add_page($file, $file);
-
-    my($base, $ext) = split m(\.), $file;
-    $base eq 'README' and $ext and
-	$perl_dist->{options}{link_map}->add_page("perl$ext", $file);
+	my ( $base, $ext ) = split m(\.), $file;
+	$base eq 'README'
+		and $ext
+		and $perl_dist->{options}{link_map}->add_page( "perl$ext", $file );
 }
 
+sub index {
+	my $perl_dist = shift;
+	$perl_dist->report1("index");
 
-sub index
-{
-    my $perl_dist = shift;
-       $perl_dist->report1("index");
+	my $html_dir = $perl_dist->{html_dir};
+	my $top_page = $perl_dist->{top_page};
+	my $dest     = "$html_dir/$top_page";
 
-    my $html_dir  = $perl_dist->{html_dir};
-    my $top_page  = $perl_dist->{top_page};
-    my $dest      = "$html_dir/$top_page";
+	my $fh = new IO::File ">$dest";
+	defined $fh or die "Pod::Tree::PerlDist::index: Can't open $dest: $!\n";
+	my $stream = new HTML::Stream $fh;
 
-    my $fh        = new IO::File ">$dest";
-    defined $fh or die "Pod::Tree::PerlDist::index: Can't open $dest: $!\n";
-    my $stream    = new HTML::Stream $fh;
+	my $options = $perl_dist->{options};
+	my $bgcolor = $options->{bgcolor};
+	my $text    = $options->{text};
+	my $title   = "Perl Distribution Documents";
 
-    my $options   = $perl_dist->{options};
-    my $bgcolor   = $options->{bgcolor};
-    my $text 	  = $options->{text};
-    my $title     = "Perl Distribution Documents";
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
 
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
+	$perl_dist->_emit_entries($stream);
 
-    $perl_dist->_emit_entries($stream);
-
-    $stream->_BODY->_HTML;
+	$stream->_BODY->_HTML;
 }
 
+sub get_top_entry {
+	my $perl_dist = shift;
 
-sub get_top_entry
-{
-    my $perl_dist = shift;
-
-    +{ URL         => $perl_dist->{top_page},
-       description => 'distribution documents' }
+	+{
+		URL         => $perl_dist->{top_page},
+		description => 'distribution documents'
+	};
 }
 
+sub _emit_entries {
+	my ( $perl_dist, $stream ) = @_;
 
-sub _emit_entries
-{
-    my($perl_dist, $stream) = @_;
+	my $index   = $perl_dist->{index};
+	my $options = $perl_dist->{options};
 
-    my $index   = $perl_dist->{index};
-    my $options = $perl_dist->{options};
+	$stream->PRE;
 
-    $stream->PRE;
+	for my $name ( sort keys %$index ) {
+		$stream->A( HREF => "$name.html" )->t($name)->_A->nl;
+	}
 
-    for my $name (sort keys %$index)
-    {
-	$stream->A(HREF => "$name.html")->t($name)->_A->nl;
-    }
-
-    $stream->_PRE;
+	$stream->_PRE;
 }
 
+sub translate {
+	my $perl_dist = shift;
+	$perl_dist->report1("translate");
 
-sub translate
-{
-    my $perl_dist = shift;
-       $perl_dist->report1("translate");
+	my $depth = $perl_dist->{depth};
+	my $index = $perl_dist->{index};
 
-    my $depth = $perl_dist->{depth};
-    my $index = $perl_dist->{index};
+	$perl_dist->{options}{link_map}->set_depth($depth);
 
-    $perl_dist->{options}{link_map}->set_depth($depth);
+	for my $name ( sort keys %$index ) {
+		$perl_dist->report2($name);
 
-    for my $name (sort keys %$index)
-    {
-	$perl_dist->report2($name);
+		my $entry  = $index->{$name};
+		my $source = $entry->{source};
+		open( FILE, $source )
+			or die "Pod::Tree::PerlDist::translate: Can't open $source: $!\n";
+		my @file = <FILE>;
 
-	my $entry  = $index->{$name};
+		my $translate
+			= ( grep {/^=\w+/} @file )
+			? 'translate_pod'
+			: 'translate_text';
+
+		$perl_dist->$translate($entry);
+	}
+}
+
+sub translate_pod {
+	my ( $perl_dist, $entry ) = @_;
+
+	my $source  = $entry->{source};
+	my $dest    = $entry->{dest};
+	my $options = $perl_dist->{options};
+	my $html    = new Pod::Tree::HTML $source, $dest, %$options;
+	$html->translate;
+}
+
+sub translate_text {
+	my ( $perl_dist, $entry ) = @_;
+
 	my $source = $entry->{source};
-	open(FILE, $source) or 
-	    die "Pod::Tree::PerlDist::translate: Can't open $source: $!\n";
-	my @file = <FILE>;
+	my $dest   = $entry->{dest};
 
-	my $translate = (grep { /^=\w+/ } @file) ? 'translate_pod' : 
-	                                           'translate_text';
+	open( SOURCE, $source )
+		or die "Pod::Tree::PerlDist::translate_text: Can't open $source: $!\n";
 
-	$perl_dist->$translate($entry);
-    }
-}
+	my $fh = new IO::File ">$dest";
+	defined $fh
+		or die "Pod::Tree::PerlDist::translate_text: Can't open $dest: $!\n";
+	my $stream = new HTML::Stream $fh;
 
+	my $options = $perl_dist->{options};
+	my $bgcolor = $options->{bgcolor};
+	my $text    = $options->{text};
+	my $title   = $entry->{file};
 
-sub translate_pod
-{
-    my($perl_dist, $entry) = @_;
+	$stream->HTML->HEAD;
+	$stream->TITLE->text($title)->_TITLE;
+	$stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
+	$stream->H1->t($title)->_H1;
+	$stream->PRE;
 
-    my $source  = $entry->{source};
-    my $dest    = $entry->{dest};
-    my $options = $perl_dist->{options};
-    my $html    = new Pod::Tree::HTML $source, $dest, %$options;
-    $html->translate;
-}
+	while ( my $line = <SOURCE> ) {
+		$stream->t($line);
+	}
 
-
-sub translate_text
-{
-    my($perl_dist, $entry) = @_;
-
-    my $source  = $entry->{source};
-    my $dest    = $entry->{dest};
-
-    open(SOURCE, $source) or 
-	die "Pod::Tree::PerlDist::translate_text: Can't open $source: $!\n";
-
-    my $fh      = new IO::File ">$dest";
-    defined $fh or 
-	die "Pod::Tree::PerlDist::translate_text: Can't open $dest: $!\n";
-    my $stream  = new HTML::Stream $fh;
-
-    my $options = $perl_dist->{options};
-    my $bgcolor = $options ->{bgcolor};
-    my $text 	= $options ->{text};
-    my $title   = $entry   ->{file};
-
-    $stream-> HTML->HEAD;
-    $stream-> TITLE->text($title)->_TITLE;
-    $stream->_HEAD
-	   -> BODY(BGCOLOR => $bgcolor, TEXT => $text);
-    $stream->H1->t($title)->_H1;
-    $stream->PRE;
-
-    while (my $line = <SOURCE>)
-    {
-	$stream->t($line);
-    }
-
-    $stream->_PRE;
-    $stream->_BODY->_HTML;
+	$stream->_PRE;
+	$stream->_BODY->_HTML;
 }
 
 1
