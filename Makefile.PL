@@ -37,6 +37,7 @@ WriteMakefile(
 		Text::Template  => 1,
 		'Test::More'    => 1,
 		'Test::Compile' => 1.2.1,
+		'Path::Tiny'    => 0.068,
 	},
 	(
 		eval { ExtUtils::MakeMaker->VERSION(6.46) }

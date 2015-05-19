@@ -2,6 +2,7 @@
 
 use strict;
 use Pod::Tree;
+use Path::Tiny qw(path);
 
 use Test::More tests => 9;
 
@@ -18,10 +19,10 @@ sub Parse {
 		$tree->load_file($pod) or die "Can't load $pod: $!\n";
 
 		my $actual   = $tree->dump;
-		my $expected = ReadFile("$Dir/$file.exp");
+		my $expected = path("$Dir/$file.exp")->slurp;
 		is $actual, $expected;
 
-		WriteFile( "$Dir/$file.act", $actual );
+		path("$Dir/$file.act")->spew($actual);
 	}
 }
 
@@ -33,22 +34,5 @@ sub HasPod {
 	$tree->load_file($pod) or die "Can't load $pod: $!\n";
 
 	ok !( $tree->has_pod xor $expected );
-}
-
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or die "Can't open $file: $!\n";
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
 }
 

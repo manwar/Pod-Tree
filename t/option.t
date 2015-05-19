@@ -5,6 +5,7 @@ use diagnostics;
 use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
+use Path::Tiny qw(path);
 
 use Test::More tests => 8;
 
@@ -30,28 +31,11 @@ sub Option {
 	$html->set_options( $option => $value );
 	$html->translate;
 
-	my $expected = ReadFile("$dir/$option$suffix.exp");
+	my $expected = path("$dir/$option$suffix.exp")->slurp;
 	is $actual, $expected;
 
-	WriteFile( "$dir/$option$suffix.act", $actual );
+	path("$dir/$option$suffix.act")->spew($actual);
 
 	#   WriteFile("$ENV{HOME}/public_html/pod/$option$suffix.html", $actual);
 }
 
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or return '';
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
-	chmod 0644, $file or die "Can't chmod $file: $!\n";
-}

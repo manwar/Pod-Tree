@@ -5,6 +5,7 @@ use diagnostics;
 use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
+use Path::Tiny qw(path);
 
 my $Dir = 't/html.d';
 
@@ -53,7 +54,7 @@ sub Source3 {
 }
 
 sub Source4 {
-	my $pod = ReadFile("$Dir/paragraph.pod");
+	my $pod = path("$Dir/paragraph.pod")->slurp;
 	my $actual;
 	my $html = new Pod::Tree::HTML \$pod, \$actual;
 
@@ -74,7 +75,7 @@ sub Source {
 	$html->set_options( toc => 0 );
 	$html->translate;
 
-	my $expected = ReadFile("$Dir/paragraph.exp");
+	my $expected = path("$Dir/paragraph.exp")->slurp;
 	is $$actual, $expected;
 }
 
@@ -87,7 +88,7 @@ sub Dest1 {
 	$html->set_options( toc => 0 );
 	$html->translate;
 
-	my $expected = ReadFile("$Dir/paragraph.exp");
+	my $expected = path("$Dir/paragraph.exp")->slurp;
 	is $actual, $expected;
 }
 
@@ -99,8 +100,8 @@ sub Dest2 {
 		$html->translate;
 	}
 
-	my $expected = ReadFile("$Dir/paragraph.exp");
-	my $actual   = ReadFile("$Dir/paragraph.act");
+	my $expected = path("$Dir/paragraph.exp")->slurp;
+	my $actual   = path("$Dir/paragraph.act")->slurp;
 	is $actual, $expected;
 }
 
@@ -111,7 +112,7 @@ sub Dest3 {
 	$html->set_options( toc => 0 );
 	$html->translate;
 
-	my $expected = ReadFile("$Dir/paragraph.exp");
+	my $expected = path("$Dir/paragraph.exp")->slurp;
 	is $actual, $expected;
 }
 
@@ -122,7 +123,7 @@ sub Dest4 {
 	$html->set_options( toc => 0 );
 	$html->translate;
 
-	my $expected = ReadFile("$Dir/paragraph.exp");
+	my $expected = path("$Dir/paragraph.exp")->slurp;
 	is $actual, $expected;
 }
 
@@ -133,8 +134,8 @@ sub Dest5 {
 		$html->translate;
 	}
 
-	my $expected = ReadFile("$Dir/paragraph.exp");
-	my $actual   = ReadFile("$Dir/paragraph.act");
+	my $expected = path("$Dir/paragraph.exp")->slurp;
+	my $actual   = path("$Dir/paragraph.act")->slurp;
 	is $actual, $expected;
 }
 
@@ -145,10 +146,10 @@ sub Translate {
 		$html->set_options( toc => 0 );
 		$html->translate;
 
-		my $expected = ReadFile("$Dir/$file.exp");
+		my $expected = path("$Dir/$file.exp")->slurp;
 		is $actual, $expected;
 
-		WriteFile( "$Dir/$file.act", $actual );
+		path("$Dir/$file.act")->spew($actual);
 
 		#   WriteFile("$ENV{HOME}/public_html/pod/$file.html", $actual);
 	}
@@ -175,10 +176,10 @@ sub Emit {
 		$html->set_options( hr => 0 );
 		$html->$emit;
 
-		my $expected = ReadFile("$Dir/$piece.exp");
+		my $expected = path("$Dir/$piece.exp")->slurp;
 		is $actual, $expected;
 
-		WriteFile( "$Dir/$piece.act", $actual );
+		path("$Dir/$piece.act")->spew($actual);
 
 		#   WriteFile("$ENV{HOME}/public_html/pod/$piece.html", $actual);
 	}
@@ -190,10 +191,10 @@ sub Base {
 	$html->set_options( toc => 0, base => 'http://world.std.com/~swmcd/pod' );
 	$html->translate;
 
-	my $expected = ReadFile("$Dir/base.exp");
+	my $expected = path("$Dir/base.exp")->slurp;
 	is $actual, $expected;
 
-	WriteFile( "$Dir/base.act", $actual );
+	path("$Dir/base.act")->spew($actual);
 
 	#   WriteFile("$ENV{HOME}/public_html/pod/base.html", $actual);
 }
@@ -204,17 +205,17 @@ sub Depth {
 	$html->set_options( toc => 0, depth => 2 );
 	$html->translate;
 
-	my $expected = ReadFile("$Dir/depth.exp");
+	my $expected = path("$Dir/depth.exp")->slurp;
 	is $actual, $expected;
 
-	WriteFile( "$Dir/depth.act", $actual );
+	path("$Dir/depth.act")->spew($actual);
 
 	#   WriteFile("$ENV{HOME}/public_html/pod/depth.html", $actual);
 }
 
 sub ReadParagraphs {
 	my $file   = shift;
-	my $pod    = ReadFile($file);
+	my $pod    = path($file)->slurp;
 	my @chunks = split /( \n\s*\n | \r\s*\r | \r\n\s*\r\n )/x, $pod;
 
 	my @paragraphs;
@@ -225,20 +226,3 @@ sub ReadParagraphs {
 	@paragraphs;
 }
 
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or die "Can't open $file: $!\n";
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
-	chmod 0644, $file or die "Can't chmod $file: $!\n";
-}

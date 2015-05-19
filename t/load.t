@@ -3,6 +3,7 @@
 use strict;
 use Pod::Tree;
 use IO::File;
+use Path::Tiny qw(path);
 
 my $Dir = "t/load.d";
 
@@ -20,20 +21,20 @@ sub LoadFH {
 	$tree->load_fh($fh);
 
 	my $actual   = $tree->dump;
-	my $expected = ReadFile("$file.exp");
+	my $expected = path("$file.exp")->slurp;
 	is $actual, $expected;
 
-	WriteFile( "$file.act", $actual );
+	path("$file.act")->spew($actual);
 }
 
 sub LoadString {
 	my $file   = shift;
-	my $string = ReadFile("$file.pod");
+	my $string = path("$file.pod")->slurp;
 	my $tree   = new Pod::Tree;
 	$tree->load_string($string);
 
 	my $actual   = $tree->dump;
-	my $expected = ReadFile("$file.exp");
+	my $expected = path("$file.exp")->slurp;
 	is $actual, $expected;
 }
 
@@ -45,14 +46,14 @@ sub LoadParagraphs {
 	$tree->load_paragraphs( \@paragraphs );
 
 	my $actual   = $tree->dump;
-	my $expected = ReadFile("$file.exp");
+	my $expected = path("$file.exp")->slurp;
 
 	is $actual, $expected;
 }
 
 sub ReadParagraphs {
 	my $file   = shift;
-	my $pod    = ReadFile($file);
+	my $pod    = path($file)->slurp;
 	my @chunks = split /(\n{2,})/, $pod;
 
 	my @paragraphs;
@@ -61,23 +62,6 @@ sub ReadParagraphs {
 	}
 
 	@paragraphs;
-}
-
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or die "Can't open $file: $!\n";
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
 }
 
 sub Split {

@@ -3,6 +3,7 @@
 use strict;
 use Pod::Tree;
 use IO::File;
+use Path::Tiny qw(path);
 
 my $Dir = "t/cut.d";
 
@@ -25,15 +26,15 @@ sub LoadFile {
 	$tree->load_file( "$Dir/cut.pod", %options );
 
 	my $actual   = $tree->dump;
-	my $expected = ReadFile("$Dir/$dump.exp");
+	my $expected = path("$Dir/$dump.exp")->slurp;
 	is $actual, $expected;
 
-	WriteFile( "$Dir/$dump.act", $actual );
+	path("$Dir/$dump.act")->spew($actual);
 }
 
 sub LoadString {
 	my ( $dump, $in_pod ) = @_;
-	my $string = ReadFile("$Dir/cut.pod");
+	my $string = path("$Dir/cut.pod")->slurp;
 
 	my %options;
 	defined $in_pod and $options{in_pod} = $in_pod;
@@ -42,41 +43,24 @@ sub LoadString {
 	$tree->load_string( $string, %options );
 
 	my $actual   = $tree->dump;
-	my $expected = ReadFile("$Dir/$dump.exp");
+	my $expected = path("$Dir/$dump.exp")->slurp;
 	is $actual, $expected;
 
-	WriteFile( "$Dir/$dump.act", $actual );
+	path("$Dir/$dump.act")->spew($actual);
 }
 
 sub LoadParagraphs {
 	my $file       = shift;
-	my $string     = ReadFile("$file.pod");
+	my $string     = path("$file.pod")->slurp;
 	my @paragraphs = split m(\n{2,}), $string;
 	my $tree       = new Pod::Tree;
 
 	$tree->load_paragraphs( \@paragraphs );
 
 	my $actual   = $tree->dump;
-	my $expected = ReadFile("$file.p_exp");
+	my $expected = path("$file.p_exp")->slurp;
 
 	is $actual, $expected;
-}
-
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or return '';
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
 }
 
 sub Split {

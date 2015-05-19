@@ -5,6 +5,7 @@ use diagnostics;
 use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
+use Path::Tiny qw(path);
 
 my $Dir = 't/mapper.d';
 
@@ -28,31 +29,13 @@ sub Translate {
 		$html->set_options( link_map => $mapper ) if $mapper;
 		$html->translate;
 
-		my $expected = ReadFile("$Dir/$file.exp");
+		my $expected = path("$Dir/$file.exp")->slurp;
 		is $actual, $expected;
 
-		WriteFile( "$Dir/$file.act", $actual );
+		path("$Dir/$file.act")->spew($actual);
 
 		#   WriteFile("$ENV{HOME}/public_html/pod/$file.html", $actual);
 	}
-}
-
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or die "Can't open $file: $!\n";
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
-	chmod 0644, $file or die "Can't chmod $file: $!\n";
 }
 
 package URL_Mapper;

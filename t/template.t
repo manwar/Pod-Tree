@@ -5,6 +5,7 @@ use diagnostics;
 use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
+use Path::Tiny qw(path);
 
 my $Dir = 't/template.d';
 
@@ -23,8 +24,8 @@ sub Template1 {
 			$html->translate("$Dir/template.txt");
 		}
 
-		my $expected = ReadFile("$Dir/$file.exp");
-		my $actual   = ReadFile($act);
+		my $expected = path("$Dir/$file.exp")->slurp;
+		my $actual   = path($act)->slurp;
 		is $actual, $expected;
 	}
 }
@@ -40,26 +41,9 @@ sub Template2 {
 			$html->translate("$Dir/template.txt");
 		}
 
-		my $expected = ReadFile("$Dir/$file.exp");
-		my $actual   = ReadFile("$act");
+		my $expected = path("$Dir/$file.exp")->slurp;
+		my $actual   = path("$act")->slurp;
 		is $actual, $expected;
 	}
 }
 
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or die "Can't open $file: $!\n";
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
-	chmod 0644, $file or die "Can't chmod $file: $!\n";
-}

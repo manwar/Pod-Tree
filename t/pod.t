@@ -4,6 +4,7 @@ use strict;
 use diagnostics;
 use Pod::Tree;
 use Pod::Tree::Pod;
+use Path::Tiny qw(path);
 
 use Test::More tests => 6;
 
@@ -16,27 +17,10 @@ for my $file (qw(cut paragraph list sequence for link)) {
 	my $pod = new Pod::Tree::Pod $tree, $actual;
 	$pod->translate;
 
-	my $expected = ReadFile("$dir/$file.pod");
+	my $expected = path("$dir/$file.pod")->slurp;
 	is $$actual, $expected;
 
-	WriteFile( "$dir/$file.act", $$actual );
-}
-
-sub ReadFile {
-	my $file = shift;
-	open( FILE, $file ) or die "Can't open $file: $!\n";
-	local $/;
-	undef $/;
-	my $contents = <FILE>;
-	close FILE;
-	$contents;
-}
-
-sub WriteFile {
-	my ( $file, $contents ) = @_;
-	open( FILE, ">$file" ) or die "Can't open $file: $!\n";
-	print FILE $contents;
-	close FILE;
+	path("$dir/$file.act")->spew($$actual);
 }
 
 package IO::String;
