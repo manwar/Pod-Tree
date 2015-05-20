@@ -74,7 +74,7 @@ sub Translate_POD {
 	$pod =~ s( \.\w+$ )()x;
 	$Index{$pod} = 1;
 
-	my $html = new Pod::Tree::HTML $source, $dest;
+	my $html = Pod::Tree::HTML->new( $source, $dest );
 	$html->set_options( %Options, depth => $depth );
 	$html->translate;
 }
@@ -95,10 +95,10 @@ sub Depth {
 
 sub Index {
 	my $index = "$HTMLDir/index.html";
-	my $fh    = new IO::File ">$index";
+	my $fh    = IO::File->new(">$index");
 	defined $fh or die "Can't open $index: $!\n";
 
-	my $stream = new HTML::Stream $fh;
+	my $stream = HTML::Stream->new($fh);
 
 	my $title   = $Options{index};
 	my $bgcolor = $Options{bgcolor};

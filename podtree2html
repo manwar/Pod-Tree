@@ -14,7 +14,7 @@ umask 0022;
 
 @ARGV < 2 and die "podtree2html PODfile HTMLfile [templateFile]\n";
 my ( $source, $dest, $template, @variables ) = @ARGV;
-my $html = new Pod::Tree::HTML $source, $dest;
+my $html = Pod::Tree::HTML->new( $source, $dest );
 $html->set_options(%Options);
 
 do $Options{variables} if $Options{variables};
