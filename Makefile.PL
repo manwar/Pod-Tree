@@ -1,3 +1,5 @@
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
 
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
@@ -29,15 +31,15 @@ WriteMakefile(
 	},
 	EXE_FILES => [qw(mod2html podtree2html pods2html perl2html)],
 	PREREQ_PM => {
-		File::Find      => 1,
-		HTML::Stream    => 1.49,
-		IO::File        => 1,
-		IO::String      => 1,
-		Pod::Escapes    => 1.02,
-		Text::Template  => 1,
-		'Test::More'    => 1,
-		'Test::Compile' => 1.2.1,
-		'Path::Tiny'    => 0.068,
+		'File::Find'     => 1,
+		'HTML::Stream'   => 1.49,
+		'IO::File'       => 1,
+		'IO::String'     => 1,
+		'Pod::Escapes'   => 1.02,
+		'Text::Template' => 1,
+		'Test::More'     => 1,
+		'Test::Compile'  => 1.2.1,
+		'Path::Tiny'     => 0.068,
 	},
 	(
 		eval { ExtUtils::MakeMaker->VERSION(6.46) }
