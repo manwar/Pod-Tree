@@ -58,7 +58,7 @@ sub _resolve_source {
 
 	isa( $source, 'Pod::Tree' ) and return $source;
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	not $ref and $tree->load_file($source);
 	isa( $source, 'IO::File' ) and $tree->load_fh($source);
 	$ref eq 'SCALAR' and $tree->load_string($$source);
@@ -75,24 +75,24 @@ sub _resolve_dest {
 
 	$tree->has_pod
 		or $options->{empty}
-		or return ( undef, new Pod::Tree::BitBucket );
+		or return ( undef, Pod::Tree::BitBucket->new );
 
 	local *isa = \&UNIVERSAL::isa;
 	local *can = \&UNIVERSAL::can;
 
 	isa( $dest, 'HTML::Stream' ) and return ( undef, $dest );
-	isa( $dest, 'IO::File' )     and return ( $dest, new HTML::Stream $dest);
-	can( $dest, 'print' ) and return ( $dest, new HTML::Stream $dest);
+	isa( $dest, 'IO::File' )     and return ( $dest, HTML::Stream->new($dest) );
+	can( $dest, 'print' ) and return ( $dest, HTML::Stream->new($dest) );
 
 	if ( ref $dest eq 'SCALAR' ) {
-		my $fh = new IO::String $$dest;
-		return ( $fh, new HTML::Stream $fh);
+		my $fh = IO::String->new($$dest);
+		return ( $fh, HTML::Stream->new($fh) );
 	}
 
 	if ( ref $dest eq '' and $dest ) {
-		my $fh = new IO::File;
+		my $fh = IO::File->new;
 		$fh->open( $dest, '>' ) or die "Pod::Tree::HTML::new: Can't open $dest: $!\n";
-		return ( $fh, new HTML::Stream $fh);
+		return ( $fh, HTML::Stream->new($fh) );
 	}
 
 	die "Pod::Tree::HTML::_resolve_dest: Can't write HTML to $dest\n";
@@ -157,8 +157,8 @@ sub _template {
 	my ( $html, $tSource ) = @_;
 
 	my $fh      = $html->{fh};
-	my $sStream = new Pod::Tree::StrStream;
-	$html->{stream} = new HTML::Stream $sStream;
+	my $sStream = Pod::Tree::StrStream->new;
+	$html->{stream} = HTML::Stream->new($sStream);
 
 	our $bgcolor = $html->{options}{bgcolor};
 	our $text    = $html->{options}{text};
@@ -172,7 +172,7 @@ sub _template {
 	$html->emit_body;
 	our $body = $sStream->get;
 
-	my $template = new Text::Template SOURCE => $tSource
+	my $template = Text::Template->new( SOURCE => $tSource )
 		or die "Can't create Text::Template object: $Text::Template::ERROR\n";
 
 	$template->fill_in( OUTPUT => $fh )
@@ -631,17 +631,17 @@ Pod::Tree::HTML - Generate HTML from a Pod::Tree
 
   use Pod::Tree::HTML;
   
-  $source   =   new Pod::Tree %options;
+  $source   =   Pod::Tree->new(%options);
   $source   =  "file.pod";
-  $source   =   new IO::File;
+  $source   =   IO::File->new;
   $source   = \$pod;
   $source   = \@pod;
   
-  $dest     =   new HTML::Stream;
-  $dest     =   new IO::File;
+  $dest     =   HTML::Stream->new;
+  $dest     =   IO::File->new;
   $dest     =  "file.html";
   
-  $html     =   new Pod::Tree::HTML $source, $dest, %options;
+  $html     =   Pod::Tree::HTML->new($source, $dest, %options);
   
               $html->set_options(%options);
   @values   = $html->get_options(@keys);
@@ -1024,8 +1024,8 @@ with the C<link_map> option
 	return $url;
     }
     
-    $mapper = new MyMapper;
-    $html   = new Pod::Tree::HTML link_map => $mapper;
+    $mapper = MyMapper->new;
+    $html   = Pod::Tree::HTML->new(link_map => $mapper);
 
 Your object should implement one method
 

@@ -26,7 +26,7 @@ sub load_file {
 
 	Pod::Tree::Node->set_filename($file);
 
-	my $fh = new IO::File;
+	my $fh = IO::File->new;
 	$fh->open($file) or return '';
 	$tree->load_fh( $fh, %options );
 
@@ -41,7 +41,7 @@ sub load_fh {
 	$tree->_load_options(%options);
 	my $limit = $tree->{limit};
 
-	my $stream = new Pod::Tree::Stream $fh;
+	my $stream = Pod::Tree::Stream->new($fh);
 	my $paragraph;
 	my @paragraphs;
 	while ( $paragraph = $stream->get_paragraph ) {
