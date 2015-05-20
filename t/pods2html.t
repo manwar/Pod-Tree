@@ -121,17 +121,12 @@ sub ListCmp {
 }
 
 sub FileCmp {
-	my ( $a, $b ) = @_;
+	my ( $x, $y ) = @_;
 
 	local $/ = undef;
 
-	open A, $a or die "Can't open $a: $!\n";
-	open B, $b or die "Can't open $b: $!\n";
+	open my $fx, '<', $x or die "Can't open $x: $!\n";
+	open my $fy, '<', $y or die "Can't open $y: $!\n";
 
-	my $cmp = <A> ne <B>;
-
-	close A;
-	close B;
-
-	$cmp;
+	return <$fx> ne <$fy>;
 }

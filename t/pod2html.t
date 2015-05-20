@@ -17,7 +17,7 @@ for my $file (@Files) {
 
 	unlink $html;
 	system "$Config{perlpath} blib/script/podtree2html --notoc $pod $html";
-	ok !Cmp( $html, $exp );
+	ok !FileCmp( $html, $exp );
 }
 
 for my $file (@Files) {
@@ -29,7 +29,7 @@ for my $file (@Files) {
 
 	unlink $html;
 	system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template";
-	ok !Cmp( $html, $exp );
+	ok !FileCmp( $html, $exp );
 }
 
 for my $file (@Files) {
@@ -41,16 +41,16 @@ for my $file (@Files) {
 
 	unlink $html;
 	system "$Config{perlpath} blib/script/podtree2html --notoc -variables $values $pod $html $template color=red";
-	ok !Cmp( $html, $exp );
+	ok !FileCmp( $html, $exp );
 }
 
-sub Cmp {
-	my ( $a, $b ) = @_;
+sub FileCmp {
+	my ( $x, $y ) = @_;
 
 	local $/ = undef;
 
-	open A, $a or die "Can't open $a: $!\n";
-	open B, $b or die "Can't open $b: $!\n";
+	open my $fx, '<', $x or die "Can't open $x: $!\n";
+	open my $fy, '<', $y or die "Can't open $y: $!\n";
 
-	<A> ne <B>;
+	return <$fx> ne <$fy>;
 }
