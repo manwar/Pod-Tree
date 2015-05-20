@@ -7,7 +7,7 @@ sub mkdir {
 	my ( $translator, $dir ) = @_;
 
 	-d $dir
-		or CORE::mkdir $dir, 0755
+		or CORE::mkdir $dir, oct(755)
 		or die "Pod::Tree::PerlUtil::mkdir: Can't mkdir $dir: $!\n";
 }
 
