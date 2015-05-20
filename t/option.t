@@ -20,12 +20,12 @@ sub Option {
 	my ( $option, $suffix, $value ) = @_;
 
 	my $dir  = "t/option.d";
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	my $pod  = "$dir/$option.pod";
 	$tree->load_file($pod) or die "Can't load $pod: $!\n";
 
 	my $actual = '';
-	my $html = new Pod::Tree::HTML $tree, \$actual;
+	my $html = Pod::Tree::HTML->new( $tree, \$actual );
 	$html->set_options( $option => $value );
 	$html->translate;
 

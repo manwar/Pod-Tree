@@ -13,7 +13,7 @@ HasPod( "empty.pod", 0 );
 
 sub Parse {
 	for my $file (qw(cut paragraph list sequence link for)) {
-		my $tree = new Pod::Tree;
+		my $tree = Pod::Tree->new;
 		my $pod  = "$Dir/$file.pod";
 		$tree->load_file($pod) or die "Can't load $pod: $!\n";
 
@@ -28,7 +28,7 @@ sub Parse {
 sub HasPod {
 	my ( $file, $expected ) = @_;
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	my $pod  = "$Dir/$file";
 	$tree->load_file($pod) or die "Can't load $pod: $!\n";
 

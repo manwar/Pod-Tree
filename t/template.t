@@ -18,7 +18,7 @@ sub Template1 {
 		unlink $act;
 
 		{
-			my $html = new Pod::Tree::HTML "$Dir/$file.pod", $act;
+			my $html = Pod::Tree::HTML->new( "$Dir/$file.pod", $act );
 			$html->translate("$Dir/template.txt");
 		}
 
@@ -34,8 +34,8 @@ sub Template2 {
 		unlink $act;
 
 		{
-			my $dest = new IO::File "> $act";
-			my $html = new Pod::Tree::HTML "$Dir/$file.pod", $dest;
+			my $dest = IO::File->new("> $act");
+			my $html = Pod::Tree::HTML->new( "$Dir/$file.pod", $dest );
 			$html->translate("$Dir/template.txt");
 		}
 

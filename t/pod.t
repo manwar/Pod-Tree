@@ -9,10 +9,10 @@ use Pod::Tree::Pod;
 my $dir = "t/pod.d";
 
 for my $file (qw(cut paragraph list sequence for link)) {
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_file("$dir/$file.pod");
-	my $actual = new IO::String;
-	my $pod = new Pod::Tree::Pod $tree, $actual;
+	my $actual = IO::String->new;
+	my $pod = Pod::Tree::Pod->new( $tree, $actual );
 	$pod->translate;
 
 	my $expected = path("$dir/$file.pod")->slurp;

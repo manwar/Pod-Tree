@@ -11,10 +11,10 @@ my $Dir = 't/mapper.d';
 
 Translate();
 
-my $mapper = new Map_Mapper;
+my $mapper = Map_Mapper->new;
 Translate($mapper);
 
-$mapper = new URL_Mapper;
+$mapper = URL_Mapper->new;
 Translate($mapper);
 
 sub Translate {
@@ -22,7 +22,7 @@ sub Translate {
 
 	for my $file (qw(cut paragraph list sequence for link)) {
 		my $actual = '';
-		my $html = new Pod::Tree::HTML "$Dir/$file.pod", \$actual;
+		my $html = Pod::Tree::HTML->new( "$Dir/$file.pod", \$actual );
 		$html->set_options( toc => 0 );
 		$html->set_options( link_map => $mapper ) if $mapper;
 		$html->translate;

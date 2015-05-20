@@ -14,8 +14,8 @@ LoadParagraphs("$Dir/list");
 
 sub LoadFH {
 	my $file = shift;
-	my $fh   = new IO::File;
-	my $tree = new Pod::Tree;
+	my $fh   = IO::File->new;
+	my $tree = Pod::Tree->new;
 	$fh->open("$file.pod") or die "Can't open $file.pod: $!\n";
 	$tree->load_fh($fh);
 
@@ -29,7 +29,7 @@ sub LoadFH {
 sub LoadString {
 	my $file   = shift;
 	my $string = path("$file.pod")->slurp;
-	my $tree   = new Pod::Tree;
+	my $tree   = Pod::Tree->new;
 	$tree->load_string($string);
 
 	my $actual   = $tree->dump;
@@ -40,7 +40,7 @@ sub LoadString {
 sub LoadParagraphs {
 	my $file       = shift;
 	my @paragraphs = ReadParagraphs("$file.pod");
-	my $tree       = new Pod::Tree;
+	my $tree       = Pod::Tree->new;
 
 	$tree->load_paragraphs( \@paragraphs );
 

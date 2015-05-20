@@ -29,25 +29,25 @@ Base();
 Depth();
 
 sub Source1 {
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_file("$Dir/paragraph.pod");
 	my $actual;
-	my $html = new Pod::Tree::HTML $tree, \$actual;
+	my $html = Pod::Tree::HTML->new( $tree, \$actual );
 
 	Source( $html, \$actual );
 }
 
 sub Source2 {
 	my $actual;
-	my $html = new Pod::Tree::HTML "$Dir/paragraph.pod", \$actual;
+	my $html = Pod::Tree::HTML->new( "$Dir/paragraph.pod", \$actual );
 
 	Source( $html, \$actual );
 }
 
 sub Source3 {
-	my $io = new IO::File "$Dir/paragraph.pod";
+	my $io = IO::File->new("$Dir/paragraph.pod");
 	my $actual;
-	my $html = new Pod::Tree::HTML $io, \$actual;
+	my $html = Pod::Tree::HTML->new( $io, \$actual );
 
 	Source( $html, \$actual );
 }
@@ -55,7 +55,7 @@ sub Source3 {
 sub Source4 {
 	my $pod = path("$Dir/paragraph.pod")->slurp;
 	my $actual;
-	my $html = new Pod::Tree::HTML \$pod, \$actual;
+	my $html = Pod::Tree::HTML->new( \$pod, \$actual );
 
 	Source( $html, \$actual );
 }
@@ -63,7 +63,7 @@ sub Source4 {
 sub Source5 {
 	my @paragraphs = ReadParagraphs("$Dir/paragraph.pod");
 	my $actual;
-	my $html = new Pod::Tree::HTML \@paragraphs, \$actual;
+	my $html = Pod::Tree::HTML->new( \@paragraphs, \$actual );
 
 	Source( $html, \$actual );
 }
@@ -80,9 +80,9 @@ sub Source {
 
 sub Dest1 {
 	my $actual;
-	my $string = new IO::String $actual;
-	my $stream = new HTML::Stream $string;
-	my $html   = new Pod::Tree::HTML "$Dir/paragraph.pod", $stream;
+	my $string = IO::String->new($actual);
+	my $stream = HTML::Stream->new($string);
+	my $html   = Pod::Tree::HTML->new( "$Dir/paragraph.pod", $stream );
 
 	$html->set_options( toc => 0 );
 	$html->translate;
@@ -93,8 +93,8 @@ sub Dest1 {
 
 sub Dest2 {
 	{
-		my $file = new IO::File "$Dir/paragraph.act",        '>';
-		my $html = new Pod::Tree::HTML "$Dir/paragraph.pod", $file;
+		my $file = IO::File->new( "$Dir/paragraph.act", '>' );
+		my $html = Pod::Tree::HTML->new( "$Dir/paragraph.pod", $file );
 		$html->set_options( toc => 0 );
 		$html->translate;
 	}
@@ -106,8 +106,8 @@ sub Dest2 {
 
 sub Dest3 {
 	my $actual;
-	my $string = new IO::String $actual;
-	my $html = new Pod::Tree::HTML "$Dir/paragraph.pod", $string;
+	my $string = IO::String->new($actual);
+	my $html = Pod::Tree::HTML->new( "$Dir/paragraph.pod", $string );
 	$html->set_options( toc => 0 );
 	$html->translate;
 
@@ -117,7 +117,7 @@ sub Dest3 {
 
 sub Dest4 {
 	my $actual;
-	my $html = new Pod::Tree::HTML "$Dir/paragraph.pod", \$actual;
+	my $html = Pod::Tree::HTML->new( "$Dir/paragraph.pod", \$actual );
 
 	$html->set_options( toc => 0 );
 	$html->translate;
@@ -128,7 +128,7 @@ sub Dest4 {
 
 sub Dest5 {
 	{
-		my $html = new Pod::Tree::HTML "$Dir/paragraph.pod", "$Dir/paragraph.act";
+		my $html = Pod::Tree::HTML->new( "$Dir/paragraph.pod", "$Dir/paragraph.act" );
 		$html->set_options( toc => 0 );
 		$html->translate;
 	}
@@ -141,7 +141,7 @@ sub Dest5 {
 sub Translate {
 	for my $file (qw(cut paragraph list sequence for link)) {
 		my $actual = '';
-		my $html = new Pod::Tree::HTML "$Dir/$file.pod", \$actual;
+		my $html = Pod::Tree::HTML->new( "$Dir/$file.pod", \$actual );
 		$html->set_options( toc => 0 );
 		$html->translate;
 
@@ -158,11 +158,11 @@ sub Empty {
 	my $actual = "$Dir/empty.act";
 	unlink $actual;
 
-	my $html = new Pod::Tree::HTML "$Dir/empty.pod", $actual;
+	my $html = Pod::Tree::HTML->new( "$Dir/empty.pod", $actual );
 	$html->translate;
 	ok !-e $actual;
 
-	$html = new Pod::Tree::HTML "$Dir/empty.pod", $actual, empty => 1;
+	$html = Pod::Tree::HTML->new( "$Dir/empty.pod", $actual, empty => 1 );
 	$html->translate;
 	ok -e $actual;
 }
@@ -170,7 +170,7 @@ sub Empty {
 sub Emit {
 	for my $piece (qw(body toc)) {
 		my $actual = '';
-		my $html   = new Pod::Tree::HTML "$Dir/paragraph.pod", \$actual;
+		my $html   = Pod::Tree::HTML->new( "$Dir/paragraph.pod", \$actual );
 		my $emit   = "emit_$piece";
 		$html->set_options( hr => 0 );
 		$html->$emit;
@@ -186,7 +186,7 @@ sub Emit {
 
 sub Base {
 	my $actual = '';
-	my $html = new Pod::Tree::HTML "$Dir/link.pod", \$actual;
+	my $html = Pod::Tree::HTML->new( "$Dir/link.pod", \$actual );
 	$html->set_options( toc => 0, base => 'http://world.std.com/~swmcd/pod' );
 	$html->translate;
 
@@ -200,7 +200,7 @@ sub Base {
 
 sub Depth {
 	my $actual = '';
-	my $html = new Pod::Tree::HTML "$Dir/link.pod", \$actual;
+	my $html = Pod::Tree::HTML->new( "$Dir/link.pod", \$actual );
 	$html->set_options( toc => 0, depth => 2 );
 	$html->translate;
 

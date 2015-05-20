@@ -21,7 +21,7 @@ sub LoadFile {
 	my %options;
 	defined $in_pod and $options{in_pod} = $in_pod;
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_file( "$Dir/cut.pod", %options );
 
 	my $actual   = $tree->dump;
@@ -38,7 +38,7 @@ sub LoadString {
 	my %options;
 	defined $in_pod and $options{in_pod} = $in_pod;
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_string( $string, %options );
 
 	my $actual   = $tree->dump;
@@ -52,7 +52,7 @@ sub LoadParagraphs {
 	my $file       = shift;
 	my $string     = path("$file.pod")->slurp;
 	my @paragraphs = split m(\n{2,}), $string;
-	my $tree       = new Pod::Tree;
+	my $tree       = Pod::Tree->new;
 
 	$tree->load_paragraphs( \@paragraphs );
 
