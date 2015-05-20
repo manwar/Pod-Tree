@@ -2,5 +2,4 @@
 
 severity = 5
 theme = core
-verbose = 11
-
+verbose = %f: [%p] %m at line %l, column %c.\n
