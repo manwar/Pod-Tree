@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use Pod::Escapes ();
 
-$Pod::Tree::Node::VERSION = '1.10';
+$Pod::Tree::Node::VERSION = '1.23';
 
 sub root    # ctor
 {

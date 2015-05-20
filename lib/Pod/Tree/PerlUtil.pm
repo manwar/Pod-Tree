@@ -3,6 +3,8 @@ use warnings;
 
 package Pod::Tree::PerlUtil;
 
+our $VERSION = '1.23';
+
 sub mkdir {
 	my ( $translator, $dir ) = @_;
 

@@ -2,6 +2,8 @@ package Pod::Tree::Stream;
 use strict;
 use warnings;
 
+our $VERSION = '1.23';
+
 sub new {
 	my ( $package, $fh ) = @_;
 

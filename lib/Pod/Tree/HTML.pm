@@ -18,7 +18,7 @@ use Pod::Tree::StrStream;
 use constant BGCOLOR => '#ffffff';
 use constant TEXT    => '#000000';
 
-our $VERSION = '1.10';
+our $VERSION = '1.23';
 
 sub new {
 	my ( $class, $source, $dest, %options ) = @_;

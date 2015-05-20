@@ -7,6 +7,8 @@ use Pod::Tree::PerlUtil;
 
 package Pod::Tree::PerlLib;
 
+our $VERSION = '1.23';
+
 use base qw(Pod::Tree::PerlUtil);
 
 use constant COLUMN_WIDTH => 30;

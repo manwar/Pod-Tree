@@ -1,5 +1,8 @@
 Revision history for Perl extension Pod::Tree
 
+1.23  2015.05.20
+    -  Add version numbers to all the pm files.
+
 1.22  2015.05.20
     - Refactoring code: 3 argument open, no bareword filehandles
     - Refactoring code: convert indirect calls to direct calls

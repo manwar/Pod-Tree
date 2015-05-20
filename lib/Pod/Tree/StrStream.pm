@@ -2,6 +2,8 @@ package Pod::Tree::StrStream;
 use strict;
 use warnings;
 
+our $VERSION = '1.23';
+
 sub new {
 	my ( $class, $ref ) = @_;
 

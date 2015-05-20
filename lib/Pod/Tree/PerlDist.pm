@@ -7,6 +7,8 @@ use Pod::Tree::PerlUtil;
 
 package Pod::Tree::PerlDist;
 
+our $VERSION = '1.23';
+
 use base qw(Pod::Tree::PerlUtil);
 
 sub new {

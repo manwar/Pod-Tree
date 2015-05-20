@@ -3,6 +3,8 @@ use warnings;
 
 package Pod::Tree::PerlMap;
 
+our $VERSION = '1.23';
+
 sub new {
 	my ($class) = @_;
 
