@@ -4,14 +4,11 @@
 
 package Pod::Tree;
 
-require Exporter;
-
 use strict;
 use warnings;
 use IO::File;
 use Pod::Tree::Node;
 use Pod::Tree::Stream;
-use base qw(Exporter);
 
 $Pod::Tree::VERSION = '1.21';
 
