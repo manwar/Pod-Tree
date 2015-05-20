@@ -4,5 +4,5 @@ severity = 5
 theme = core
 verbose = %f: [%p] %m at line %l, column %c.\n
 
-# [Objects::ProhibitIndirectSyntax]
-# severity = 5
+[Objects::ProhibitIndirectSyntax]
+severity = 5
