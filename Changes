@@ -1,5 +1,13 @@
 Revision history for Perl extension Pod::Tree
 
+1.21  2015.05.20
+    - More tests (use Test::Compile)
+    - Refactoring code (use Path::Tiny)
+    - Run perltidy on the code.
+    - Separate packages to their own files.
+    - Add use warnings; use strict; remove use diagnostics;
+    - Remove remaining use 5.... statements.
+
 1.20  2015.05.19
     - Refactor test script to use Test::More
 

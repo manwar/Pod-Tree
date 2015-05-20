@@ -13,7 +13,7 @@ use Pod::Tree::Node;
 use Pod::Tree::Stream;
 use base qw(Exporter);
 
-$Pod::Tree::VERSION = '1.20';
+$Pod::Tree::VERSION = '1.21';
 
 sub new {
 	my $class = shift;
