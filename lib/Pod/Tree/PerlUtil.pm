@@ -38,7 +38,7 @@ sub report2 {
 sub get_name {
 	my ( $node, $source ) = @_;
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_file($source);
 	my $children = $tree->get_root->get_children;
 	my @pod      = grep { is_pod $_ } @$children;

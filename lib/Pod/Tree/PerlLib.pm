@@ -132,9 +132,9 @@ sub index {
 	my $top_page = $perl_lib->{top_page};
 	my $dest     = "$html_dir/$top_page";
 
-	my $fh = new IO::File ">$dest";
+	my $fh = IO::File->new(">$dest");
 	defined $fh or die "Pod::Tree::PerlLib::index: Can't open $dest: $!\n";
-	my $stream = new HTML::Stream $fh;
+	my $stream = HTML::Stream->new($fh);
 
 	my $options = $perl_lib->{options};
 	my $bgcolor = $options->{bgcolor};
@@ -205,7 +205,7 @@ sub translate {
 		my $entry  = $index->{$name};
 		my $source = $entry->{source};
 		my $dest   = $entry->{dest};
-		my $html   = new Pod::Tree::HTML $source, $dest, %$options;
+		my $html   = Pod::Tree::HTML->new( $source, $dest, %$options );
 		$html->translate;
 	}
 }
@@ -220,8 +220,8 @@ Pod::Tree::PerlLib - translate module PODs to HTML
 
 =head1 SYNOPSIS
 
-  $perl_map = new Pod::Tree::PerlMap;
-  $perl_lib = new Pod::Tree::PerlLib $perl_dir, $HTML_dir, $perl_map, %opts;
+  $perl_map = Pod::Tree::PerlMap->new;
+  $perl_lib = Pod::Tree::PerlLib->new( $perl_dir, $HTML_dir, $perl_map, %opts );
 
   $perl_lib->scan(@INC);
   $perl_lib->index;

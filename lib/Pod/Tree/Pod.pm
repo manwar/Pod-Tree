@@ -31,7 +31,7 @@ sub _resolve_dest {
 
 	ref $dest and return $dest;
 
-	my $fh = new IO::File;
+	my $fh = IO::File->new;
 	$fh->open(">$dest") or die "Pod::Tree::Pod::new: Can't open $dest: $!\n";
 	$fh;
 }

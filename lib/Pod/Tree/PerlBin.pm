@@ -102,9 +102,9 @@ sub index {
 
 	$perl_bin->mkdir("$html_dir/$bin_dir");
 
-	my $fh = new IO::File ">$dest";
+	my $fh = IO::File->new(">$dest");
 	defined $fh or die "Pod::Tree::PerlBin::index: Can't open $dest: $!\n";
-	my $stream = new HTML::Stream $fh;
+	my $stream = HTML::Stream->new($fh);
 
 	my $options = $perl_bin->{options};
 	my $bgcolor = $options->{bgcolor};
@@ -174,7 +174,7 @@ sub translate {
 		my $entry  = $index->{$name};
 		my $source = $entry->{source};
 		my $dest   = $entry->{dest};
-		my $html   = new Pod::Tree::HTML $source, $dest, %$options;
+		my $html   = Pod::Tree::HTML->new( $source, $dest, %$options );
 		$html->translate;
 	}
 }
@@ -189,8 +189,8 @@ Pod::Tree::PerlBin - translate program PODs to HTML
 
 =head1 SYNOPSIS
 
-  $perl_map = new Pod::Tree::PerlMap;
-  $perl_bin = new Pod::Tree::PerlBin $perl_dir, $HTML_dir, $perl_map, %opts;
+  $perl_map = Pod::Tree::PerlMap->new;
+  $perl_bin = Pod::Tree::PerlBin->new($perl_dir, $HTML_dir, $perl_map, %opts);
 
   $perl_bin->scan(@path);
   $perl_bin->index;

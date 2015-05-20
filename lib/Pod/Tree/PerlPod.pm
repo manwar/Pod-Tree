@@ -108,9 +108,9 @@ sub index {
 	my $top_page = $perl_pod->{top_page};
 	my $dest     = "$html_dir/$top_page";
 
-	my $fh = new IO::File ">$dest";
+	my $fh = IO::File->new(">$dest");
 	defined $fh or die "Pod::Tree::PerlPod::index: Can't open $dest: $!\n";
-	my $stream = new HTML::Stream $fh;
+	my $stream = HTML::Stream->new($fh);
 
 	my $options = $perl_pod->{options};
 	my $bgcolor = $options->{bgcolor};
@@ -185,7 +185,7 @@ sub _translate {
 	my $depth = @path - 1;
 	$options->{link_map}->set_depth($depth);
 
-	my $html = new Pod::Tree::HTML $source, $dest, %$options;
+	my $html = Pod::Tree::HTML->new( $source, $dest, %$options );
 	$html->translate;
 }
 
@@ -199,8 +199,8 @@ Pod::Tree::PerlPod - translate Perl PODs to HTML
 
 =head1 SYNOPSIS
 
-  $perl_map = new Pod::Tree::PerlMap;
-  $perl_pod = new Pod::Tree::PerlPod $perl_dir, $HTML_dir, $perl_map, %opts;
+  $perl_map = Pod::Tree::PerlMap->new;
+  $perl_pod = Pod::Tree::PerlPod->new( $perl_dir, $HTML_dir, $perl_map, %opts );
 
   $perl_pod->scan;
   $perl_pod->index;

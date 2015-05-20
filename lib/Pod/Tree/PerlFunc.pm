@@ -45,7 +45,7 @@ sub load_tree {
 	my $source     = "$perl_dir/$pod_dir/$page.pod";
 	my $win_source = "$perl_dir/lib/$pod_dir/$page.pod";
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_file($source)         or    # for building the doc set from a Perl distribution
 		$tree->load_file($win_source) or    # for building the doc set from a Windows installation
 		die "Pod::Tree::PerlFunc::scan: Can't find $source or $win_source\n";
@@ -94,7 +94,7 @@ sub index {
 	$options->{link_map}->set_depth(1);
 
 	my $dest = "$html_dir/$pod_dir/$page.html";
-	my $html = new Pod::Tree::HTML $tree, $dest, %$options;
+	my $html = Pod::Tree::HTML->new( $tree, $dest, %$options );
 	$html->translate;
 }
 
@@ -144,7 +144,7 @@ sub add_index {
 
 	my $pod = join "\n\n", @lines;
 
-	my $tree = new Pod::Tree;
+	my $tree = Pod::Tree->new;
 	$tree->load_string($pod);
 	my $children = $tree->get_root->get_children;
 
@@ -174,7 +174,7 @@ sub translate {
 		my ( $func, $file ) = Parse_Name( $items[0] );
 		$perl_func->report2("func/$file");
 
-		my $tree = new Pod::Tree;
+		my $tree = Pod::Tree->new;
 		$tree->load_string("=head1 $func\n\n=over 4\n\n=back");
 		my $list = $tree->get_root->get_children->[1];
 		$list->set_children( \@items );
@@ -182,7 +182,7 @@ sub translate {
 
 		$options->{title} = $func;
 		my $dest = "$html_dir/$pod_dir/$func_dir/$file.html";
-		my $html = new Pod::Tree::HTML $tree, $dest, %$options;
+		my $html = Pod::Tree::HTML->new( $tree, $dest, %$options );
 		$html->translate;
 	}
 
@@ -230,8 +230,8 @@ Pod::Tree::PerlFunc - translate F<perlfunc.pod> to HTML
 
 =head1 SYNOPSIS
 
-  $perl_map  = new Pod::Tree::PerlMap;
-  $perl_func = new Pod::Tree::PerlFunc $perl_dir, $HTML_dir, $perl_map, %opts;
+  $perl_map  = Pod::Tree::PerlMap->new;
+  $perl_func = Pod::Tree::PerlFunc->new($perl_dir, $HTML_dir, $perl_map, %opts);
 
   $perl_func->scan;
   $perl_func->index;

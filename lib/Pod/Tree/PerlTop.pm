@@ -43,9 +43,9 @@ sub index {
 	my $html_dir = $perl_top->{html_dir};
 	my $dest     = "$html_dir/index.html";
 
-	my $fh = new IO::File ">$dest";
+	my $fh = IO::File->new(">$dest");
 	defined $fh or die "Pod::Tree::PerlTop::index: Can't open $dest: $!\n";
-	my $stream = new HTML::Stream $fh;
+	my $stream = HTML::Stream->new($fh);
 
 	my $options = $perl_top->{options};
 	my $bgcolor = $options->{bgcolor};
@@ -88,7 +88,7 @@ sub translate {
 	my $page     = $perl_top->{page};
 	my $source   = "$perl_dir/$pod_src/$page.pod";
 	my $dest     = "$html_dir/$pod_dst/$page.html";
-	my $html     = new Pod::Tree::HTML::PerlTop $source, $dest, %$options;
+	my $html     = Pod::Tree::HTML::PerlTop->new( $source, $dest, %$options );
 	my $links    = $perl_top->_get_links;
 
 	$html->set_links($links);
@@ -165,8 +165,8 @@ Pod::Tree::PerlTop - generate a top-level index for Perl PODs
 
 =head1 SYNOPSIS
 
-  $perl_map = new Pod::Tree::PerlMap;
-  $perl_top = new Pod::Tree::PerlTop $perl_dir, $HTML_dir, $perl_map, %opts;
+  $perl_map = Pod::Tree::PerlMap->new;
+  $perl_top = Pod::Tree::PerlTop->new( $perl_dir, $HTML_dir, $perl_map, %opts );
   
   $perl_top->index(@translators);
   $perl_top->translate;
