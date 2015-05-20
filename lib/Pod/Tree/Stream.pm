@@ -18,7 +18,7 @@ sub get_paragraph {
 	my $fh     = $stream->{fh};
 	my $line   = $stream->{line};
 
-	defined $line or return undef;
+	defined $line or return undef;    ##no critic (ProhibitExplicitReturnUndef)
 
 	my (@lines) = ($line);
 	while ( $line = $fh->getline ) {

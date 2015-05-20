@@ -194,12 +194,12 @@ sub _make_title {
 		$node1 and last;
 	}
 
-	$node1 or return undef;
+	$node1 or return undef;    ##no critic (ProhibitExplicitReturnUndef)
 
 	my $text = $node1->get_deep_text;
 	($title) = split m(\s+-), $text;
 
-	$title or return undef;    # to quiet -w
+	$title or return undef;    ##no critic (ProhibitExplicitReturnUndef)
 	$title =~ s(\s+$)();
 
 	$title;
