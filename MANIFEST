@@ -6,7 +6,9 @@ README
 ToDo
 ToDo.Not
 lib/Pod/Tree.pm
+lib/Pod/Tree/BitBucket.pm
 lib/Pod/Tree/HTML.pm
+lib/Pod/Tree/HTML/PerlTop.pm
 lib/Pod/Tree/Node.pm
 lib/Pod/Tree/PerlBin.pm
 lib/Pod/Tree/PerlDist.pm
@@ -17,6 +19,8 @@ lib/Pod/Tree/PerlPod.pm
 lib/Pod/Tree/PerlTop.pm
 lib/Pod/Tree/PerlUtil.pm
 lib/Pod/Tree/Pod.pm
+lib/Pod/Tree/StrStream.pm
+lib/Pod/Tree/Stream.pm
 mod2html
 perl2html
 pod.css
