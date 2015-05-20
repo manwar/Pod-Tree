@@ -1,5 +1,13 @@
 Revision history for Perl extension Pod::Tree
 
+1.22  2015.05.20
+    - Refactoring code: 3 argument open, no bareword filehandles
+    - Refactoring code: convert indirect calls to direct calls
+    - Add optional test using Test::Perl::Critic
+    - Fix missing file issue introduced in 1.21
+    - Include the Test::Comile based test
+
+
 1.21  2015.05.20
     - More tests (use Test::Compile)
     - Refactoring code (use Path::Tiny)
