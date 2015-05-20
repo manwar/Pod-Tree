@@ -21,6 +21,7 @@ for my $file (qw(cut paragraph list sequence for link)) {
 	path("$dir/$file.act")->spew($$actual);
 }
 
+##no critic (RequireFilenameMatchesPackage)
 package IO::String;
 
 sub new {

@@ -36,6 +36,7 @@ sub Translate {
 	}
 }
 
+## no critic (RequireFilenameMatchesPackage)
 package URL_Mapper;
 
 sub new { bless {}, shift }
