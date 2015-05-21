@@ -157,6 +157,7 @@ sub translate {
 		open( my $FILE, '<', $source )
 			or die "Pod::Tree::PerlDist::translate: Can't open $source: $!\n";
 		my @file = <$FILE>;
+		close $FILE;
 
 		my $translate
 			= ( grep {/^=\w+/} @file )
@@ -183,9 +184,6 @@ sub translate_text {
 	my $source = $entry->{source};
 	my $dest   = $entry->{dest};
 
-	open( my $SOURCE, '<', $source )
-		or die "Pod::Tree::PerlDist::translate_text: Can't open $source: $!\n";
-
 	my $fh = IO::File->new(">$dest");
 	defined $fh
 		or die "Pod::Tree::PerlDist::translate_text: Can't open $dest: $!\n";
@@ -202,9 +200,13 @@ sub translate_text {
 	$stream->H1->t($title)->_H1;
 	$stream->PRE;
 
+	open( my $SOURCE, '<', $source )
+		or die "Pod::Tree::PerlDist::translate_text: Can't open $source: $!\n";
+
 	while ( my $line = <$SOURCE> ) {
 		$stream->t($line);
 	}
+	close $SOURCE;
 
 	$stream->_PRE;
 	$stream->_BODY->_HTML;
