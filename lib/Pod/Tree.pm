@@ -234,12 +234,12 @@ sub walk {
 }
 
 sub _walk {
-	my $sub = $_[1];
+	my ( $tree, $sub ) = @_;
 
-	my $descend = &$sub( $_[0] );    # :TRICKY: sub can modify node
+	my $descend = &$sub($tree);    # :TRICKY: sub can modify node
 	$descend or return;
 
-	my $node = $_[0];
+	my $node = $tree;
 
 	my $children = $node->get_children;
 	for my $child (@$children) {

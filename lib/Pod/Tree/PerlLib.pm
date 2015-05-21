@@ -13,12 +13,13 @@ use base qw(Pod::Tree::PerlUtil);
 use constant COLUMN_WIDTH => 30;
 
 sub new {
+	my ( $class, $perl_dir, $html_dir, $link_map, %options ) = @_;
+
 	my %defaults = (
 		col_width => COLUMN_WIDTH,
 		bgcolor   => '#ffffff',
 		text      => '#000000'
 	);
-	my ( $class, $perl_dir, $html_dir, $link_map, %options ) = @_;
 	my $options = { %defaults, %options, link_map => $link_map };
 
 	my %stop_files = map { $_ => 1 } qw(perllocal.pod);
