@@ -14,7 +14,6 @@ severity = 5
 [-Subroutines::ProhibitBuiltinHomonyms]
 [-Subroutines::RequireArgUnpacking]
 [-Subroutines::RequireFinalReturn]
-[-TestingAndDebugging::RequireUseWarnings]
 [-ValuesAndExpressions::ProhibitCommaSeparatedStatements]
 [-ValuesAndExpressions::ProhibitConstantPragma]
 [-Variables::RequireLocalizedPunctuationVars]

@@ -1,6 +1,7 @@
 #!/usr/local/bin/perl
 
 use strict;
+use warnings;
 
 my @entries;
 my %entry;
