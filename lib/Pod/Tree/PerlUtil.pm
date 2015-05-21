@@ -1,7 +1,6 @@
+package Pod::Tree::PerlUtil;
 use strict;
 use warnings;
-
-package Pod::Tree::PerlUtil;
 
 our $VERSION = '1.23';
 

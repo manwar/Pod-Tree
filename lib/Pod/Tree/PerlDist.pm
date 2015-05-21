@@ -1,11 +1,10 @@
+package Pod::Tree::PerlDist;
 use strict;
 use warnings;
 use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
 use Pod::Tree::PerlUtil;
-
-package Pod::Tree::PerlDist;
 
 our $VERSION = '1.23';
 

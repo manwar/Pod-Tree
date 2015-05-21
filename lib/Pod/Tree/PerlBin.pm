@@ -1,3 +1,4 @@
+package Pod::Tree::PerlBin;
 use strict;
 use warnings;
 use File::Find;
@@ -5,8 +6,6 @@ use HTML::Stream;
 use Pod::Tree;
 use Pod::Tree::HTML;
 use Pod::Tree::PerlUtil;
-
-package Pod::Tree::PerlBin;
 
 our $VERSION = '1.23';
 

@@ -1,10 +1,9 @@
+package Pod::Tree::PerlFunc;
 use strict;
 use warnings;
 use Pod::Tree;
 use Pod::Tree::HTML;
 use Pod::Tree::PerlUtil;
-
-package Pod::Tree::PerlFunc;
 
 our $VERSION = '1.23';
 

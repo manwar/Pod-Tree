@@ -1,7 +1,6 @@
+package Pod::Tree::PerlMap;
 use strict;
 use warnings;
-
-package Pod::Tree::PerlMap;
 
 our $VERSION = '1.23';
 
