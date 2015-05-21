@@ -14,6 +14,7 @@ use Text::Template;
 
 use Pod::Tree::BitBucket;
 use Pod::Tree::StrStream;
+use Pod::Tree::HTML::LinkMap;
 
 use constant BGCOLOR => '#ffffff';
 use constant TEXT    => '#000000';
@@ -593,32 +594,6 @@ sub escape_2396 {
 	my ( $html, $text ) = @_;
 	$text =~ s(([^\w\-.!~*'()]))(sprintf("%%%02x", ord($1)))eg;
 	$text;
-}
-
-package Pod::Tree::HTML::LinkMap;
-use strict;
-use warnings;
-
-sub new {
-	my $class = shift;
-	bless {}, $class;
-}
-
-sub url {
-	my ( $link_map, $html, $target ) = @_;
-
-	my $depth = $html->{options}{depth};
-	my $base = join '/', ('..') x $depth;
-
-	my $page = $target->get_page;
-	$page =~ s(::)(/)g;
-	$page .= '.html' if $page;
-
-	my $section  = $target->get_section;
-	my $fragment = $html->escape_2396($section);
-
-	my $url = $html->assemble_url( $base, $page, $fragment );
-	$url;
 }
 
 __END__

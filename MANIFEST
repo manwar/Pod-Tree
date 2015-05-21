@@ -9,6 +9,7 @@ lib/Pod/Tree.pm
 lib/Pod/Tree/BitBucket.pm
 lib/Pod/Tree/HTML.pm
 lib/Pod/Tree/HTML/PerlTop.pm
+lib/Pod/Tree/HTML/LinkMap.pm
 lib/Pod/Tree/Node.pm
 lib/Pod/Tree/PerlBin.pm
 lib/Pod/Tree/PerlDist.pm
