@@ -1,5 +1,13 @@
 Revision history for Perl extension Pod::Tree
 
+1.24  2015.05.22
+    - Include the rc files in the distribution to use the proper 
+      Perl::Critic configuration.
+    - use Test::Version to make sure we have the same version number
+      in every module.
+    - Configure Perl::Critic to be level 4.
+    - Lots of other refactorings.
+
 1.23  2015.05.20
     -  Add version numbers to all the pm files.
 

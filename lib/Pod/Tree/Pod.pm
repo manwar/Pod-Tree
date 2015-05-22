@@ -6,7 +6,7 @@ package Pod::Tree::Pod;
 use strict;
 use warnings;
 
-our $VERSION = '1.23';
+our $VERSION = '1.24';
 
 use IO::File;
 use Pod::Tree;

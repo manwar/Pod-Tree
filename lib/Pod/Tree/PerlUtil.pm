@@ -2,7 +2,7 @@ package Pod::Tree::PerlUtil;
 use strict;
 use warnings;
 
-our $VERSION = '1.23';
+our $VERSION = '1.24';
 
 sub mkdir {
 	my ( $translator, $dir ) = @_;
