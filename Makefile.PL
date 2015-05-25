@@ -6,7 +6,7 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 
-WriteMakefile(
+my %config = (
 	NAME         => 'Pod::Tree',
 	VERSION_FROM => 'lib/Pod/Tree.pm',    # finds $VERSION
 	DISTNAME     => 'Pod-Tree',
@@ -38,9 +38,6 @@ WriteMakefile(
 		'IO::String'     => 1,
 		'Pod::Escapes'   => 1.02,
 		'Text::Template' => 1,
-		'Test::More'     => 1,
-		'Test::Compile'  => '1.2.1',
-		'Path::Tiny'     => 0.068,
 	},
 	(
 		eval { ExtUtils::MakeMaker->VERSION(6.46) }
@@ -63,3 +60,19 @@ WriteMakefile(
 		: ()
 	)
 );
+
+my %test_requires = (
+	'Test::More'    => 1,
+	'Test::Compile' => '1.2.1',
+	'Path::Tiny'    => 0.068,
+);
+
+if ( eval { ExtUtils::MakeMaker->VERSION(6.64) } ) {
+	$config{TEST_REQUIRES} = \%test_requires;
+}
+else {
+	$config{BUILD_REQUIRES} = \%test_requires;
+}
+
+WriteMakefile(%config);
+
