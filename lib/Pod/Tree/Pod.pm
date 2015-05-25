@@ -254,12 +254,12 @@ Pod::Tree::Pod - Convert a Pod::Tree back to a POD
 
   use Pod::Tree::Pod;
 
-  $tree =  new Pod::Tree;
+  $tree =  Pod::Tree->new;
     
-  $dest =  new IO::File;
+  $dest =  IO::File->new;
   $dest = "file.pod";
 
-  $pod  =  new Pod::Tree::Pod $tree, $dest;
+  $pod  =  Pod::Tree::Pod->new($tree, $dest);
 
   $pod->translate;
 

@@ -273,7 +273,7 @@ Pod::Tree - Create a static syntax tree for a POD
 
   use Pod::Tree;
   
-  $tree = new Pod::Tree;
+  $tree = Pod::Tree->new;
   $tree->load_file      ( $file, %options)
   $tree->load_fh        ( $fh  , %options);
   $tree->load_string    ( $pod , %options);
@@ -289,11 +289,6 @@ Pod::Tree - Create a static syntax tree for a POD
             $tree->walk(\&sub);
             $tree->has_pod and ...
   print     $tree->dump;
-
-
-=head1 REQUIRES
-
-Pod::Escapes
 
 
 =head1 EXPORTS
@@ -312,7 +307,7 @@ See L<C<Pod::Tree::Node>> for a description of the tree.
 
 =over 4
 
-=item I<$tree> = C<new> C<Pod::Tree>
+=item I<$tree> = C<Pod::Tree>->C<new>
 
 Creates a new C<Pod::Tree> object.
 The syntax tree is initially empty.
