@@ -5,7 +5,7 @@ theme = core
 verbose = %f: [%p] %m at line %l, column %c.\n
 
 [Objects::ProhibitIndirectSyntax]
-severity = 5
+forbid = command code is_c_begin is_c_cut is_c_for is_c_pod is_code is_command is_for is_item is_letter is_link is_list is_ordinary is_pod is_root is_sequence is_text is_verbatim ordinary root verbatim
 
 [-InputOutput::RequireBriefOpen]
 [-Modules::ProhibitMultiplePackages]

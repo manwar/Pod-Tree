@@ -110,7 +110,7 @@ sub add_links {
 sub _add_links {
 	my ( $perl_func, $node ) = @_;
 
-	is_sequence $node or return 1;
+	$node->is_sequence or return 1;
 	$node->get_letter eq 'C' or return 1;
 
 	my ($func) = Parse_Name($node);

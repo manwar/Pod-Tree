@@ -223,12 +223,12 @@ sub is_verbatim { shift->{type} eq 'verbatim' }
 
 sub is_link {
 	my $node = shift;
-	is_sequence $node and $node->{'letter'} eq 'L';
+	$node->is_sequence and $node->{'letter'} eq 'L';
 }
 
 sub is_pod {
 	my $node = shift;
-	not is_code $node and not is_c_cut $node and not is_c_pod $node;
+	not $node->is_code and not $node->is_c_cut and not $node->is_c_pod;
 }
 
 sub is_c_head1 {
@@ -421,7 +421,7 @@ sub _pop_sequence {
 
 	while (@$stack) {
 		$node = pop @$stack;
-		is_letter $node
+		$node->is_letter
 			and $node->{width} == $width
 			and return ( $node, \@interior );
 		unshift @interior, $node;
@@ -437,7 +437,7 @@ sub _pop_sequence {
 sub parse_links {
 	my $node = shift;
 
-	is_link $node and $node->_parse_link;
+	$node->is_link and $node->_parse_link;
 
 	my $children = $node->{children};
 	for my $child (@$children) {
@@ -464,7 +464,7 @@ sub SplitBar {
 	while (@$children) {
 		my $child = shift @$children;
 
-		is_text $child or do {
+		$child->is_text or do {
 			push @text, $child;
 			next;
 		};
@@ -490,7 +490,7 @@ sub unescape {
 		$child->unescape;
 	}
 
-	is_sequence $node and $node->_unescape_sequence;
+	$node->is_sequence and $node->_unescape_sequence;
 }
 
 sub _unescape_sequence {
@@ -525,9 +525,9 @@ sub consolidate {
 	push @$new, shift @$old;
 
 	while (@$old) {
-		if (   is_text $new->[-1] and is_text $old->[0]
-			or is_verbatim $new->[-1] and is_verbatim $old->[0]
-			or is_code $new->[-1] and is_code $old->[0] )
+		if (   $new->[-1]->is_text and $old->[0]->is_text
+			or $new->[-1]->is_verbatim and $old->[0]->is_verbatim
+			or $new->[-1]->is_code and $old->[0]->is_code )
 		{
 			$new->[-1]{'text'} .= $old->[0]{'text'};
 			shift @$old;
@@ -566,7 +566,7 @@ sub _make_lists {
 
 	$node->{children} = $new;
 
-	is_root $node and return;
+	$node->is_root and return;
 
 	$node->{type} = 'list';
 	$node->{back} = $back;

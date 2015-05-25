@@ -145,30 +145,30 @@ sub _make_nodes {
 
 		if ($in_pod) {
 			if ( $paragraph =~ /^\s/ ) {
-				$node = verbatim Pod::Tree::Node $paragraph;
+				$node = Pod::Tree::Node->verbatim($paragraph);
 			}
 			elsif ( $Command{$word} ) {
-				$node   = command Pod::Tree::Node $paragraph;
+				$node   = Pod::Tree::Node->command($paragraph);
 				$in_pod = $word ne '=cut';
 			}
 			else {
-				$node = ordinary Pod::Tree::Node $paragraph;
+				$node = Pod::Tree::Node->ordinary($paragraph);
 			}
 		}
 		else {
 			if ( $Command{$word} ) {
-				$node   = command Pod::Tree::Node $paragraph;
+				$node   = Pod::Tree::Node->command($paragraph);
 				$in_pod = $word ne '=cut';
 			}
 			else {
-				$node = code Pod::Tree::Node $paragraph;
+				$node = Pod::Tree::Node->code($paragraph);
 			}
 		}
 
 		push @children, $node;
 	}
 
-	$tree->{root} = root Pod::Tree::Node \@children;
+	$tree->{root} = Pod::Tree::Node->root( \@children );
 }
 
 sub _make_for {
@@ -179,8 +179,8 @@ sub _make_for {
 	my @new;
 	while (@$old) {
 		my $node = shift @$old;
-		is_c_for $node   and $node->force_for;
-		is_c_begin $node and $node->parse_begin($old);
+		$node->is_c_for   and $node->force_for;
+		$node->is_c_begin and $node->parse_begin($old);
 		push @new, $node;
 	}
 
@@ -193,9 +193,9 @@ sub _make_sequences {
 	my $nodes = $root->get_children;
 
 	for my $node (@$nodes) {
-		is_code $node     and next;
-		is_verbatim $node and next;
-		is_for $node      and next;
+		$node->is_code     and next;
+		$node->is_verbatim and next;
+		$node->is_for      and next;
 		$node->make_sequences;
 	}
 }

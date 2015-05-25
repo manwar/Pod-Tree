@@ -190,7 +190,7 @@ sub _make_title {
 	my $node1;
 	my $i = 0;
 	for my $child (@$children) {
-		is_pod $child or next;
+		$child->is_pod or next;
 		$i++ and $node1 = $child;
 		$node1 and last;
 	}
