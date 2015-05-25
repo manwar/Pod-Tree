@@ -1,3 +1,4 @@
+use 5.006;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
@@ -38,7 +39,7 @@ WriteMakefile(
 		'Pod::Escapes'   => 1.02,
 		'Text::Template' => 1,
 		'Test::More'     => 1,
-		'Test::Compile'  => 1.2.1,
+		'Test::Compile'  => '1.2.1',
 		'Path::Tiny'     => 0.068,
 	},
 	(
