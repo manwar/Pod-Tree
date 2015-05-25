@@ -1,5 +1,11 @@
 Revision history for Perl extension Pod::Tree
 
+
+1.25 2015.05.25
+    - Rename test files to have number prefix.
+    - Move test reqirements to TEST_REQUIRES or BUILD_REQUIRES for older EUMM
+    - Older versions of EU::MM require quotes around 2-dot versions (CHORNY)
+
 1.24  2015.05.22
     - Include the rc files in the distribution to use the proper 
       Perl::Critic configuration.

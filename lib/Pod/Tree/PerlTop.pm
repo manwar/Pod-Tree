@@ -2,7 +2,7 @@ package Pod::Tree::PerlTop;
 use strict;
 use warnings;
 
-our $VERSION = '1.24';
+our $VERSION = '1.25';
 
 use Pod::Tree::HTML;
 use Pod::Tree::PerlUtil;

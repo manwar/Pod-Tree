@@ -4,7 +4,7 @@ use warnings;
 
 use base qw(Pod::Tree::HTML);
 
-our $VERSION = '1.24';
+our $VERSION = '1.25';
 
 sub set_links {
 	my ( $html, $links ) = @_;
