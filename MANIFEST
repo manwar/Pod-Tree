@@ -35,7 +35,6 @@ t/cut.d/fileU.exp
 t/cut.d/string0.exp
 t/cut.d/string1.exp
 t/cut.d/stringU.exp
-t/cut.t
 t/html.d/base.exp
 t/html.d/body.exp
 t/html.d/cut.exp
@@ -53,10 +52,8 @@ t/html.d/paragraph.pod
 t/html.d/sequence.exp
 t/html.d/sequence.pod
 t/html.d/toc.exp
-t/html.t
 t/load.d/list.exp
 t/load.d/list.pod
-t/load.t
 t/mapper.d/cut.exp
 t/mapper.d/cut.pod
 t/mapper.d/for.exp
@@ -69,7 +66,6 @@ t/mapper.d/paragraph.exp
 t/mapper.d/paragraph.pod
 t/mapper.d/sequence.exp
 t/mapper.d/sequence.pod
-t/mapper.t
 t/option.d/base.pod
 t/option.d/baseD.exp
 t/option.d/baseU.exp
@@ -81,14 +77,12 @@ t/option.d/hr3.exp
 t/option.d/toc.pod
 t/option.d/toc0.exp
 t/option.d/toc1.exp
-t/option.t
 t/pod.d/cut.pod
 t/pod.d/for.pod
 t/pod.d/link.pod
 t/pod.d/list.pod
 t/pod.d/paragraph.pod
 t/pod.d/sequence.pod
-t/pod.t
 t/pod2html.d/cut.exp
 t/pod2html.d/cut.exp_t
 t/pod2html.d/cut.exp_tv
@@ -115,7 +109,6 @@ t/pod2html.d/sequence.exp_tv
 t/pod2html.d/sequence.pod
 t/pod2html.d/template.txt
 t/pod2html.d/values.pl
-t/pod2html.t
 t/pods2html.d/empty_exp/A.html
 t/pods2html.d/empty_exp/A/B.html
 t/pods2html.d/empty_exp/C.html
@@ -163,8 +156,6 @@ t/pods2html.d/podR_exp/HTML/C/D.html
 t/pods2html.d/podR_exp/HTML/C/D/E.html
 t/pods2html.d/template.txt
 t/pods2html.d/values.pl
-t/pods2html.t
-t/template.t
 t/template.d/cut.exp
 t/template.d/cut.pod
 t/template.d/for.exp
@@ -192,7 +183,16 @@ t/tree.d/paragraph.exp
 t/tree.d/paragraph.pod
 t/tree.d/sequence.exp
 t/tree.d/sequence.pod
-t/tree.t
+t/10-cut.t
+t/11-html.t
+t/12-load.t
+t/13-mapper.t
+t/14-option.t
+t/15-pod.t
+t/16-pod2html.t
+t/17-pods2html.t
+t/18-template.t
+t/19-tree.t
 t/00-compile.t
 t/94-version.t
 t/95-tidyall.t
