@@ -349,7 +349,7 @@ sub parse_begin {
 	my @raw;
 	while (@$nodes) {
 		$foreign = shift @$nodes;
-		is_c_end $foreign and last;
+		$foreign->is_c_end and last;
 		push @raw, $foreign->{'raw'};
 	}
 	$node->{'text'} = join '', @raw;
@@ -387,7 +387,7 @@ sub _parse_text {
 		$token =~ /^[A-Z]</ and do {
 			my $width = $token =~ tr/</</;
 			push @width, $width;
-			my $node = letter Pod::Tree::Node $token;
+			my $node = Pod::Tree::Node->letter($token);
 			push @stack, $node;
 			next;
 		};
@@ -395,7 +395,7 @@ sub _parse_text {
 		@width and $token =~ />{$width[-1],}$/ and do {
 			my $width = pop @width;
 			my ( $letter, $interior ) = _pop_sequence( \@stack, $width );
-			my $node = sequence Pod::Tree::Node $letter, $interior;
+			my $node = Pod::Tree::Node->sequence( $letter, $interior );
 			push @stack, $node;
 			$token =~ s/^\s*>{$width}//;
 			my @tokens = split //, $token;
@@ -403,7 +403,7 @@ sub _parse_text {
 			next;
 		};
 
-		my $node = text Pod::Tree::Node $token;
+		my $node = Pod::Tree::Node->text($token);
 		push @stack, $node;
 	}
 
@@ -430,7 +430,7 @@ sub _pop_sequence {
 	my @text = map { $_->get_deep_text } @interior;
 	$node->_warn("Mismatched sequence delimiters around\n@text");
 
-	$node = letter Pod::Tree::Node ' ';
+	$node = Pod::Tree::Node->letter(' ');
 	$node, \@interior;
 }
 
@@ -454,7 +454,7 @@ sub _parse_link {
 	my ( $text_kids, $target_kids ) = SplitBar($children);
 
 	$node->{children} = $text_kids;
-	$node->{'target'} = target Pod::Tree::Node $target_kids;
+	$node->{'target'} = Pod::Tree::Node->target($target_kids);
 }
 
 sub SplitBar {
@@ -471,8 +471,8 @@ sub SplitBar {
 
 		my ( $text, $link ) = split m(\|), $child->{'text'}, 2;
 		$link and do {
-			push @text, text Pod::Tree::Node $text if $text;
-			push @link, ( text Pod::Tree::Node $link), @$children;
+			push @text, Pod::Tree::Node->text($text) if $text;
+			push @link, Pod::Tree::Node->text($link), @$children;
 			return ( \@text, \@link );
 		};
 
@@ -558,9 +558,9 @@ sub _make_lists {
 
 	while (@$old) {
 		my $child = shift @$old;
-		is_c_over $child and $child->_make_lists($old);
-		is_c_item $child and $child->_make_item($old);
-		is_c_back $child and $back = $child, last;
+		$child->is_c_over and $child->_make_lists($old);
+		$child->is_c_item and $child->_make_item($old);
+		$child->is_c_back and $back = $child, last;
 		push @$new, $child;
 	}
 
@@ -592,11 +592,11 @@ sub _make_item {
 
 	while (@$old) {
 		my $sibling = $old->[0];
-		is_c_item $sibling and last;
-		is_c_back $sibling and last;
+		$sibling->is_c_item and last;
+		$sibling->is_c_back and last;
 
 		shift @$old;
-		is_c_over $sibling and do {
+		$sibling->is_c_over and do {
 			$sibling->_make_lists($old);
 		};
 		push @$siblings, $sibling;
@@ -790,61 +790,61 @@ Pod::Tree::Node - nodes in a Pod::Tree
 
 =head1 SYNOPSIS
 
-  $node = root     Pod::Tree::Node \@paragraphs;
-  $node = code     Pod::Tree::Node $paragraph;
-  $node = verbatim Pod::Tree::Node $paragraph;
-  $node = command  Pod::Tree::Node $paragraph;
-  $node = ordinary Pod::Tree::Node $paragraph;
-  $node = letter   Pod::Tree::Node $token;
-  $node = sequence Pod::Tree::Node $letter, \@children;
-  $node = text     Pod::Tree::Node $text;
-  $node = target   Pod::Tree::Node $target;
-  $node = link     Pod::Tree::Node $node, $page, $section;
+  $node = Pod::Tree::Node->root     ( \@paragraphs );
+  $node = Pod::Tree::Node->code     ( $paragraph   );
+  $node = Pod::Tree::Node->verbatim ( $paragraph   );
+  $node = Pod::Tree::Node->command  ( $paragraph   );
+  $node = Pod::Tree::Node->ordinary ( $paragraph   );
+  $node = Pod::Tree::Node->letter   ( $token       );
+  $node = Pod::Tree::Node->sequence ( $letter, \@children );
+  $node = Pod::Tree::Node->text     ( $text        );
+  $node = Pod::Tree::Node->target   ( $target      );
+  $node = Pod::Tree::Node->link     ( $node, $page, $section );
   
-  is_code     $node and ...
-  is_command  $node and ...
-  is_for      $node and ...
-  is_item     $node and ...
-  is_letter   $node and ...
-  is_list     $node and ...
-  is_ordinary $node and ...
-  is_pod      $node and ...
-  is_root     $node and ...
-  is_sequence $node and ...
-  is_text     $node and ...
-  is_verbatim $node and ...
-  is_link     $node and ...
+  $node->is_code     and ...
+  $node->is_command  and ...
+  $node->is_for      and ...
+  $node->is_item     and ...
+  $node->is_letter   and ...
+  $node->is_list     and ...
+  $node->is_ordinary and ...
+  $node->is_pod      and ...
+  $node->is_root     and ...
+  $node->is_sequence and ...
+  $node->is_text     and ...
+  $node->is_verbatim and ...
+  $node->is_link     and ...
   
-  is_c_head1  $node and ...
-  is_c_head2  $node and ...
-  is_c_head3  $node and ...
-  is_c_head4  $node and ...
-  is_c_cut    $node and ...
-  is_c_pod    $node and ...
-  is_c_over   $node and ...
-  is_c_back   $node and ...
-  is_c_item   $node and ...
-  is_c_for    $node and ...
-  is_c_begin  $node and ...
-  is_c_end    $node and ...
+  $node->is_c_head1  and ...
+  $node->is_c_head2  and ...
+  $node->is_c_head3  and ...
+  $node->is_c_head4  and ...
+  $node->is_c_cut    and ...
+  $node->is_c_pod    and ...
+  $node->is_c_over   and ...
+  $node->is_c_back   and ...
+  $node->is_c_item   and ...
+  $node->is_c_for    and ...
+  $node->is_c_begin  and ...
+  $node->is_c_end    and ...
   
-  $arg       = get_arg       $node;
-  $brackets  = get_brackets  $node;
-  $children  = get_children  $node;
-  $command   = get_command   $node;
-  $domain    = get_domain    $node;
-  $item_type = get_item_type $node;
-  $letter    = get_letter    $node;
-  $list_type = get_list_type $node;
-  $page      = get_page      $node;
-  $raw       = get_raw       $node;
-  $raw_kids  = get_raw_kids  $node;
-  $section   = get_section   $node;
-  $siblings  = get_siblings  $node;
-  $target    = get_target    $node;
-  $text      = get_text      $node;
-  $type      = get_type      $node;
-  $deep_text = get_deep_text $node;
+  $arg       = $node->get_arg       ;
+  $brackets  = $node->get_brackets  ;
+  $children  = $node->get_children  ;
+  $command   = $node->get_command   ;
+  $domain    = $node->get_domain    ;
+  $item_type = $node->get_item_type ;
+  $letter    = $node->get_letter    ;
+  $list_type = $node->get_list_type ;
+  $page      = $node->get_page      ;
+  $raw       = $node->get_raw       ;
+  $raw_kids  = $node->get_raw_kids  ;
+  $section   = $node->get_section   ;
+  $siblings  = $node->get_siblings  ;
+  $target    = $node->get_target    ;
+  $text      = $node->get_text      ;
+  $type      = $node->get_type      ;
+  $deep_text = $node->get_deep_text ;
   
   $node->force_text($text);
   $node->force_for;

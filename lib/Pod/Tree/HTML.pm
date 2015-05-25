@@ -227,8 +227,8 @@ sub _emit_toc_1 {
 
 	while (@$nodes) {
 		my $node = $nodes->[0];
-		is_c_head2 $node and $html->_emit_toc_2($nodes), next;
-		is_c_head1 $node and $html->_emit_toc_item($node);
+		$node->is_c_head2 and $html->_emit_toc_2($nodes), next;
+		$node->is_c_head1 and $html->_emit_toc_item($node);
 		shift @$nodes;
 	}
 
@@ -243,8 +243,8 @@ sub _emit_toc_2 {
 
 	while (@$nodes) {
 		my $node = $nodes->[0];
-		is_c_head1 $node and last;
-		is_c_head2 $node and $html->_emit_toc_item($node);
+		$node->is_c_head1 and last;
+		$node->is_c_head2 and $html->_emit_toc_item($node);
 		shift @$nodes;
 	}
 
