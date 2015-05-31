@@ -1,4 +1,5 @@
 package Pod::Tree::HTML::PerlTop;
+use 5.006;
 use strict;
 use warnings;
 

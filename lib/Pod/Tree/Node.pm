@@ -4,6 +4,7 @@
 
 package Pod::Tree::Node;
 
+use 5.006;
 use strict;
 use warnings;
 use Pod::Escapes ();

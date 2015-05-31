@@ -1,4 +1,5 @@
 package Pod::Tree::Stream;
+use 5.006;
 use strict;
 use warnings;
 

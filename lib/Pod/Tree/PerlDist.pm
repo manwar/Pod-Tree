@@ -1,4 +1,5 @@
 package Pod::Tree::PerlDist;
+use 5.006;
 use strict;
 use warnings;
 use HTML::Stream;

@@ -3,6 +3,7 @@
 # terms as Perl itself.
 
 package Pod::Tree;
+use 5.006;
 
 use strict;
 use warnings;

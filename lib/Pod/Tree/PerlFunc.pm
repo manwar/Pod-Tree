@@ -1,4 +1,5 @@
 package Pod::Tree::PerlFunc;
+use 5.006;
 use strict;
 use warnings;
 use Pod::Tree;

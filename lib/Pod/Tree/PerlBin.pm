@@ -1,4 +1,5 @@
 package Pod::Tree::PerlBin;
+use 5.006;
 use strict;
 use warnings;
 use File::Find;
