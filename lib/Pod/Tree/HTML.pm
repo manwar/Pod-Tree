@@ -1074,7 +1074,7 @@ less flexible than the C<url> method
 
 =item *
 
-supported for backwards compatability with 
+supported for backwards compatibility with
 older versions of C<Pod::Tree::HTML>
 
 =back
