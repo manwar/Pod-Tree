@@ -99,7 +99,7 @@ sub Translate_POD {
 	my $depth = Depth($source);
 
 	my $pod = $source;
-	$pod =~ s(^$PodDir/)();
+	$pod =~ s(^\Q$PodDir\E/)();
 	$pod =~ s( \.\w+$ )()x;
 	$Index{$pod} = 1;
 
