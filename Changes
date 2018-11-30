@@ -1,5 +1,9 @@
 Revision history for Perl extension Pod::Tree
 
+1.27  2018.11.30 MANWAR
+      - Updated dependency on Path::Tiny v0.105 to address the fail report.
+        https://www.cpantesters.org/cpan/report/349e7846-f40d-11e8-afbf-aec3b07506ca
+
 1.26  2018.11.29 MANWAR
       - Removed auto generated META.yml from the distribution.
       - Moved t/95-tidyall.t and t/96-perl-critic.t to xt/ (author only).
