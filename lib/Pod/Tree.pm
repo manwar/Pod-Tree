@@ -11,7 +11,7 @@ use IO::File;
 use Pod::Tree::Node;
 use Pod::Tree::Stream;
 
-our $VERSION = '1.27';
+our $VERSION = '1.28';
 
 sub new {
     my $class = shift;
