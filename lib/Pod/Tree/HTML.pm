@@ -30,21 +30,21 @@ sub new {
     my ( $fh, $stream ) = _resolve_dest( $dest, $tree, \%options );
 
     my $options = {
-    	bgcolor  => BGCOLOR,
-    	depth    => 0,
-    	hr       => 1,
-    	link_map => Pod::Tree::HTML::LinkMap->new(),
-    	text     => TEXT,
-    	toc      => 1,
+        bgcolor  => BGCOLOR,
+        depth    => 0,
+        hr       => 1,
+        link_map => Pod::Tree::HTML::LinkMap->new(),
+        text     => TEXT,
+        toc      => 1,
     };
 
     my $HTML = {
-    	tree        => $tree,
-    	root        => $tree->get_root,
-    	stream      => $stream,
-    	fh          => $fh,
-    	text_method => 'text',
-    	options     => $options,
+        tree        => $tree,
+        root        => $tree->get_root,
+        stream      => $stream,
+        fh          => $fh,
+        text_method => 'text',
+        options     => $options,
     };
 
     bless $HTML, $class;
@@ -67,7 +67,7 @@ sub _resolve_source {
     $ref eq 'ARRAY'  and $tree->load_paragraphs($source);
 
     $tree->loaded
-    	or die "Pod::Tree::HTML::_resolve_source: Can't load POD from $source\n";
+        or die "Pod::Tree::HTML::_resolve_source: Can't load POD from $source\n";
 
     $tree;
 }
@@ -76,8 +76,8 @@ sub _resolve_dest {
     my ( $dest, $tree, $options ) = @_;
 
     $tree->has_pod
-    	or $options->{empty}
-    	or return ( undef, Pod::Tree::BitBucket->new );
+        or $options->{empty}
+        or return ( undef, Pod::Tree::BitBucket->new );
 
     local *isa = \&UNIVERSAL::isa;
     local *can = \&UNIVERSAL::can;
@@ -87,14 +87,14 @@ sub _resolve_dest {
     can( $dest, 'print' ) and return ( $dest, HTML::Stream->new($dest) );
 
     if ( ref $dest eq 'SCALAR' ) {
-    	my $fh = IO::String->new($$dest);
-    	return ( $fh, HTML::Stream->new($fh) );
+        my $fh = IO::String->new($$dest);
+        return ( $fh, HTML::Stream->new($fh) );
     }
 
     if ( ref $dest eq '' and $dest ) {
-    	my $fh = IO::File->new;
-    	$fh->open( $dest, '>' ) or die "Pod::Tree::HTML::new: Can't open $dest: $!\n";
-    	return ( $fh, HTML::Stream->new($fh) );
+        my $fh = IO::File->new;
+        $fh->open( $dest, '>' ) or die "Pod::Tree::HTML::new: Can't open $dest: $!\n";
+        return ( $fh, HTML::Stream->new($fh) );
     }
 
     die "Pod::Tree::HTML::_resolve_dest: Can't write HTML to $dest\n";
@@ -105,7 +105,7 @@ sub set_options {
 
     my ( $key, $value );
     while ( ( $key, $value ) = each %options ) {
-    	$html->{options}{$key} = $value;
+        $html->{options}{$key} = $value;
     }
 }
 
@@ -121,10 +121,10 @@ sub translate {
     my ( $html, $template ) = @_;
 
     if ($template) {
-    	$html->_template($template);
+        $html->_template($template);
     }
     else {
-    	$html->_translate;
+        $html->_translate;
     }
 }
 
@@ -142,9 +142,9 @@ sub _translate {
     defined $title and $stream->TITLE->text($title)->_TITLE;
     defined $base  and $stream->BASE( href => $base );
     defined $css   and $stream->LINK(
-    	href => $css,
-    	type => "text/css",
-    	rel  => "stylesheet"
+        href => $css,
+        type => "text/css",
+        rel  => "stylesheet"
     );
 
     $stream->_HEAD->BODY( BGCOLOR => $bgcolor, TEXT => $text );
@@ -175,10 +175,10 @@ sub _template {
     our $body = $sStream->get;
 
     my $template = Text::Template->new( SOURCE => $tSource )
-    	or die "Can't create Text::Template object: $Text::Template::ERROR\n";
+        or die "Can't create Text::Template object: $Text::Template::ERROR\n";
 
     $template->fill_in( OUTPUT => $fh )
-    	or die $Text::Template::ERROR;
+        or die $Text::Template::ERROR;
 }
 
 sub _make_title {
@@ -191,9 +191,9 @@ sub _make_title {
     my $node1;
     my $i = 0;
     for my $child (@$children) {
-    	$child->is_pod or next;
-    	$i++ and $node1 = $child;
-    	$node1 and last;
+        $child->is_pod or next;
+        $i++ and $node1 = $child;
+        $node1 and last;
     }
 
     $node1 or return undef;    ##no critic (ProhibitExplicitReturnUndef)
@@ -227,10 +227,10 @@ sub _emit_toc_1 {
     $stream->UL;
 
     while (@$nodes) {
-    	my $node = $nodes->[0];
-    	$node->is_c_head2 and $html->_emit_toc_2($nodes), next;
-    	$node->is_c_head1 and $html->_emit_toc_item($node);
-    	shift @$nodes;
+        my $node = $nodes->[0];
+        $node->is_c_head2 and $html->_emit_toc_2($nodes), next;
+        $node->is_c_head1 and $html->_emit_toc_item($node);
+        shift @$nodes;
     }
 
     $stream->_UL;
@@ -243,10 +243,10 @@ sub _emit_toc_2 {
     $stream->UL;
 
     while (@$nodes) {
-    	my $node = $nodes->[0];
-    	$node->is_c_head1 and last;
-    	$node->is_c_head2 and $html->_emit_toc_item($node);
-    	shift @$nodes;
+        my $node = $nodes->[0];
+        $node->is_c_head1 and last;
+        $node->is_c_head2 and $html->_emit_toc_item($node);
+        shift @$nodes;
     }
 
     $stream->_UL;
@@ -274,7 +274,7 @@ sub _emit_children {
     my $children = $node->get_children;
 
     for my $child (@$children) {
-    	$html->_emit_node($child);
+        $html->_emit_node($child);
     }
 }
 
@@ -285,13 +285,13 @@ sub _emit_siblings {
 
     if ( @$siblings == 1 and $siblings->[0]{type} eq 'ordinary' ) {
 
-    	# don't put <p></p> around a single ordinary paragraph
-    	$html->_emit_children( $siblings->[0] );
+        # don't put <p></p> around a single ordinary paragraph
+        $html->_emit_children( $siblings->[0] );
     }
     else {
-    	for my $sibling (@$siblings) {
-    		$html->_emit_node($sibling);
-    	}
+        for my $sibling (@$siblings) {
+        	$html->_emit_node($sibling);
+        }
     }
 
 }
@@ -301,14 +301,14 @@ sub _emit_node {
     my $type = $node->{type};
 
     for ($type) {
-    	/command/  and $html->_emit_command($node);
-    	/for/      and $html->_emit_for($node);
-    	/item/     and $html->_emit_item($node);
-    	/list/     and $html->_emit_list($node);
-    	/ordinary/ and $html->_emit_ordinary($node);
-    	/sequence/ and $html->_emit_sequence($node);
-    	/text/     and $html->_emit_text($node);
-    	/verbatim/ and $html->_emit_verbatim($node);
+        /command/  and $html->_emit_command($node);
+        /for/      and $html->_emit_for($node);
+        /item/     and $html->_emit_item($node);
+        /list/     and $html->_emit_list($node);
+        /ordinary/ and $html->_emit_ordinary($node);
+        /sequence/ and $html->_emit_sequence($node);
+        /text/     and $html->_emit_text($node);
+        /verbatim/ and $html->_emit_verbatim($node);
     }
 }
 
@@ -380,26 +380,26 @@ sub _emit_item {
     my $stream    = $html->{stream};
     my $item_type = $node->get_item_type;
     for ($item_type) {
-    	/bullet/ and do {
-    		$stream->LI();
-    		$html->_emit_siblings($node);
-    		$stream->_LI();
-    	};
+        /bullet/ and do {
+        	$stream->LI();
+        	$html->_emit_siblings($node);
+        	$stream->_LI();
+        };
 
-    	/number/ and do {
-    		$stream->LI();
-    		$html->_emit_siblings($node);
-    		$stream->_LI();
-    	};
+        /number/ and do {
+        	$stream->LI();
+        	$html->_emit_siblings($node);
+        	$stream->_LI();
+        };
 
-    	/text/ and do {
-    		my $anchor = $html->_make_anchor($node);
-    		$stream->DT->A( NAME => "$anchor" );
-    		$html->_emit_children($node);
-    		$stream->_A->_DT->DD;
-    		$html->_emit_siblings($node);
-    		$stream->_DD;
-    	};
+        /text/ and do {
+        	my $anchor = $html->_make_anchor($node);
+        	$stream->DT->A( NAME => "$anchor" );
+        	$html->_emit_children($node);
+        	$stream->_A->_DT->DD;
+        	$html->_emit_siblings($node);
+        	$stream->_DD;
+        };
     }
 
 }
@@ -440,11 +440,11 @@ sub _emit_sequence {
     my ( $html, $node ) = @_;
 
     for ( $node->get_letter ) {
-    	/I|B|C|F/ and $html->_emit_element($node), last;
-    	/S/       and $html->_emit_nbsp($node),    last;
-    	/L/       and $html->_emit_link($node),    last;
-    	/X/       and $html->_emit_index($node),   last;
-    	/E/       and $html->_emit_entity($node),  last;
+        /I|B|C|F/ and $html->_emit_element($node), last;
+        /S/       and $html->_emit_nbsp($node),    last;
+        /L/       and $html->_emit_link($node),    last;
+        /X/       and $html->_emit_index($node),   last;
+        /E/       and $html->_emit_entity($node),  last;
     }
 }
 
@@ -981,7 +981,7 @@ If the L<< C<depth> => I<$depth> >> option is given,
 a corresponding number of C<../> sequences are prepended to I<page>.
 
 This is a relative URL,
-so it will be interpreted relative to the L<< C<base> => I<$base> >> option,
+so it will be interpreted relative to the L<< C<base> => I<$url> >> option,
 if any.
 
 
